@@ -1,44 +1,44 @@
 {
   "version": 1,
-  "generated": "2026-03-09T16:02:22.054894+00:00",
+  "generated": "2026-03-09T16:17:23.488966+00:00",
   "apps": [
     {
       "id": "cpp",
       "name": "C++ (GCC)",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "categories": [
         "development",
         "cli"
       ],
-      "description": "Компилятор C++ через GCC/Clang (Wandbox API).",
+      "description": "Настоящий C++ через GCC/Clang (Wandbox API)",
       "icon": "⚙️",
       "file": "cpp.orex",
       "deps": [],
       "author": "Orexia Systems",
-      "size": 6978,
+      "size": 7004,
       "downloadUrl": "apps/cpp/cpp.orex"
     },
     {
       "id": "cpp-ide",
       "name": "C++ IDE",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "categories": [
         "development"
       ],
-      "description": "IDE для написания и запуска C++ кода.",
+      "description": "IDE для написания и запуска C++ кода",
       "icon": "⚙️",
       "file": "cpp-ide.orex",
       "deps": [
         "cpp"
       ],
       "author": "Orexia Systems",
-      "size": 22270,
+      "size": 22296,
       "downloadUrl": "apps/cpp-ide/cpp-ide.orex"
     },
     {
       "id": "minecraft-classic",
       "name": "Minecraft",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "categories": [
         "games"
       ],
@@ -47,13 +47,13 @@
       "file": "mine.orex",
       "deps": [],
       "author": "Mojang Studios",
-      "size": 2335,
+      "size": 2412,
       "downloadUrl": "apps/minecraft-classic/mine.orex"
     },
     {
       "id": "nutstore",
       "name": "NutStore",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "categories": [
         "system"
       ],
@@ -62,13 +62,13 @@
       "file": "nutstore.orex",
       "deps": [],
       "author": "Orexia Systems",
-      "size": 24835,
+      "size": 24969,
       "downloadUrl": "apps/nutstore/nutstore.orex"
     },
     {
       "id": "python",
       "name": "Python 3",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "categories": [
         "development",
         "cli"
@@ -78,24 +78,24 @@
       "file": "python.orex",
       "deps": [],
       "author": "Orexia Systems",
-      "size": 3391,
+      "size": 3417,
       "downloadUrl": "apps/python/python.orex"
     },
     {
       "id": "python-ide",
       "name": "Python IDE",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "categories": [
         "development"
       ],
-      "description": "IDE для написания и запуска Python-скриптов.",
+      "description": "IDE для написания и запуска Python-скриптов",
       "icon": "🐍",
       "file": "python-ide.orex",
       "deps": [
         "python"
       ],
       "author": "Orexia Systems",
-      "size": 23911,
+      "size": 23937,
       "downloadUrl": "apps/python-ide/python-ide.orex"
     }
   ],
