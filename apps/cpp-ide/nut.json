@@ -1,0 +1,11 @@
+{
+  "id": "cpp-ide",
+  "name": "C++ IDE",
+  "version": "1.0.0",
+  "categories": ["development"],
+  "description": "IDE для написания и запуска C++ кода.",
+  "icon": "⚙️",
+  "file": "cpp-ide.orex",
+  "deps": ["cpp"],
+  "author": "Orexia Systems"
+}

@@ -1,0 +1,576 @@
+#!/usr/bin/orex
+
+@manifest
+id:      cpp-ide
+name:    C++ IDE
+icon:    ⚙️
+version: 1.0
+type:    gui
+size:    860x600
+single:  false
+deps:    cpp
+desc:    IDE для написания и запуска C++ кода
+@end
+
+@style
+:root {
+  display: flex; flex-direction: column; height: 100%;
+  overflow: hidden; font-family: 'MS Sans Serif', Geneva, sans-serif;
+  background: #1e1e2e; color: #cdd6f4;
+}
+.toolbar {
+  display: flex; align-items: center; gap: 2px;
+  padding: 2px 4px; background: #313244;
+  border-bottom: 1px solid #45475a; flex-shrink: 0;
+}
+.toolbar button {
+  background: #45475a; color: #cdd6f4; border: 1px solid #585b70;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; display: flex; align-items: center; gap: 4px;
+}
+.toolbar button:hover  { background: #585b70; }
+.toolbar button:active { background: #6c7086; }
+.toolbar button.run-btn {
+  background: #a6e3a1; color: #1e1e2e;
+  border-color: #94e2d5; font-weight: bold;
+}
+.toolbar button.run-btn:hover     { background: #94e2d5; }
+.toolbar button.run-btn:disabled  {
+  background: #585b70; color: #6c7086;
+  border-color: #45475a; cursor: not-allowed;
+}
+.toolbar button.stop-btn {
+  background: #f38ba8; color: #1e1e2e;
+  border-color: #eba0ac; font-weight: bold;
+}
+.toolbar button.stop-btn:hover { background: #eba0ac; }
+.toolbar select {
+  background: #45475a; color: #cdd6f4; border: 1px solid #585b70;
+  padding: 3px 6px; font-size: 12px; font-family: inherit; cursor: pointer;
+}
+.toolbar select:hover { background: #585b70; }
+.toolbar .separator { width: 1px; height: 20px; background: #585b70; margin: 0 4px; }
+.toolbar .file-label {
+  flex: 1; text-align: right; font-size: 11px; color: #a6adc8;
+  padding-right: 6px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; font-style: italic;
+}
+.tab-bar {
+  display: flex; background: #181825;
+  border-bottom: 1px solid #313244; flex-shrink: 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { height: 0; }
+.tab {
+  display: flex; align-items: center; gap: 6px; padding: 4px 12px;
+  font-size: 12px; color: #6c7086; background: #181825;
+  border-right: 1px solid #313244; cursor: pointer;
+  white-space: nowrap; max-width: 180px; flex-shrink: 0;
+}
+.tab:hover  { background: #1e1e2e; color: #a6adc8; }
+.tab.active { background: #1e1e2e; color: #cdd6f4; border-bottom: 2px solid #89b4fa; }
+.tab .modified  { color: #f9e2af; }
+.tab .close-tab { font-size: 14px; color: #6c7086; cursor: pointer; padding: 0 2px; line-height: 1; }
+.tab .close-tab:hover { color: #f38ba8; }
+.tab-add {
+  padding: 4px 10px; color: #6c7086; cursor: pointer;
+  font-size: 14px; background: none; border: none; flex-shrink: 0;
+}
+.tab-add:hover { color: #cdd6f4; background: #1e1e2e; }
+.main-area { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.editor-panel { flex: 1; display: flex; min-height: 0; position: relative; }
+.line-numbers {
+  width: 44px; background: #181825; color: #6c7086;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 13px; line-height: 1.45; padding: 8px 6px 8px 0;
+  text-align: right; overflow: hidden; user-select: none;
+  border-right: 1px solid #313244; flex-shrink: 0;
+}
+.editor-wrap { flex: 1; position: relative; min-width: 0; }
+.code-editor {
+  width: 100%; height: 100%; background: #1e1e2e; color: #cdd6f4;
+  border: none; outline: none; resize: none;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 13px; line-height: 1.45; padding: 8px;
+  tab-size: 4; white-space: pre; overflow: auto; box-sizing: border-box;
+}
+.code-editor::selection { background: #45475a; }
+.divider {
+  height: 4px; background: #313244; cursor: ns-resize; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-top: 1px solid #45475a; border-bottom: 1px solid #45475a;
+}
+.divider::after { content: '· · ·'; color: #6c7086; font-size: 10px; letter-spacing: 2px; }
+.divider:hover { background: #45475a; }
+.bottom-panel { height: 200px; display: flex; flex-direction: column; min-height: 80px; }
+.stdin-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 6px; background: #181825;
+  border-bottom: 1px solid #313244; flex-shrink: 0;
+}
+.stdin-row label {
+  font-size: 11px; color: #a6adc8; white-space: nowrap;
+  font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.stdin-row input {
+  flex: 1; background: #1e1e2e; color: #cdd6f4;
+  border: 1px solid #45475a; padding: 2px 6px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px; outline: none;
+}
+.stdin-row input:focus    { border-color: #89b4fa; }
+.stdin-row input::placeholder { color: #585b70; font-style: italic; }
+.stdin-row .stdin-hint    { font-size: 10px; color: #6c7086; white-space: nowrap; }
+.output-header {
+  display: flex; align-items: center; padding: 2px 8px;
+  background: #181825; border-bottom: 1px solid #313244; flex-shrink: 0;
+}
+.output-header span {
+  font-size: 11px; color: #a6adc8; font-weight: bold;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.output-header button {
+  margin-left: auto; background: none; border: none;
+  color: #6c7086; cursor: pointer; font-size: 12px; padding: 0 4px;
+}
+.output-header button:hover { color: #cdd6f4; }
+.output-content {
+  flex: 1; background: #11111b; color: #a6e3a1;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 12px; line-height: 1.4; padding: 6px 8px;
+  overflow: auto; white-space: pre-wrap; word-break: break-all;
+}
+.output-content .err  { color: #f38ba8; }
+.output-content .info { color: #89b4fa; }
+.output-content .dim  { color: #6c7086; }
+.statusbar {
+  display: flex; align-items: center; padding: 1px 8px;
+  background: #313244; border-top: 1px solid #45475a;
+  font-size: 11px; color: #a6adc8; flex-shrink: 0; gap: 16px;
+}
+.status-indicator {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #a6e3a1; flex-shrink: 0;
+}
+.status-indicator.running { background: #f9e2af; animation: pulse 0.8s ease-in-out infinite; }
+.status-indicator.error   { background: #f38ba8; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+@end
+
+@template
+<div class="toolbar">
+  <button class="new-btn"    title="Новый (Ctrl+N)">📄 Новый</button>
+  <button class="open-btn"   title="Открыть (Ctrl+O)">📂 Открыть</button>
+  <button class="save-btn"   title="Сохранить (Ctrl+S)">💾 Сохранить</button>
+  <button class="saveas-btn" title="Сохранить как…">💾 Как…</button>
+  <div class="separator"></div>
+  <button class="run-btn"  title="Скомпилировать и запустить (F5)">▶ Запустить</button>
+  <button class="stop-btn" title="Остановить" style="display:none">■ Стоп</button>
+  <div class="separator"></div>
+  <select class="compiler-select" title="Компилятор">
+    <option value="gcc-head">GCC HEAD</option>
+    <option value="gcc-13">GCC 13</option>
+    <option value="gcc-12">GCC 12</option>
+    <option value="clang-head">Clang HEAD</option>
+    <option value="clang-17">Clang 17</option>
+    <option value="clang-16">Clang 16</option>
+  </select>
+  <select class="std-select" title="Стандарт C++">
+    <option value="c++20" selected>C++20</option>
+    <option value="c++23">C++23</option>
+    <option value="c++17">C++17</option>
+    <option value="c++14">C++14</option>
+    <option value="c++11">C++11</option>
+  </select>
+  <span class="file-label">без имени</span>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-add" title="Новая вкладка">＋</button>
+</div>
+
+<div class="main-area">
+  <div class="editor-panel">
+    <div class="line-numbers">1</div>
+    <div class="editor-wrap">
+      <textarea class="code-editor" spellcheck="false"
+        placeholder="// Напишите C++ код здесь..."></textarea>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="bottom-panel">
+    <div class="stdin-row">
+      <label>stdin</label>
+      <input class="stdin-input" type="text"
+        placeholder="Данные для cin (если программа читает ввод)…" />
+      <span class="stdin-hint">↑ передаётся в --stdin до запуска</span>
+    </div>
+    <div class="output-header">
+      <span>📟 Вывод</span>
+      <button class="clear-output-btn" title="Очистить">✕</button>
+    </div>
+    <div class="output-content"></div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <div class="status-indicator"></div>
+  <span class="status-text">Готов</span>
+  <span class="cursor-pos">Стр 1, Стб 1</span>
+  <span style="margin-left:auto" class="compiler-label">GCC HEAD · C++20 · Wandbox</span>
+</div>
+@end
+
+@script
+function init($el, kernel, pid, args) {
+
+  /* ── Элементы ── */
+  const editor        = $el.querySelector('.code-editor');
+  const lineNums      = $el.querySelector('.line-numbers');
+  const output        = $el.querySelector('.output-content');
+  const statusText    = $el.querySelector('.status-text');
+  const statusDot     = $el.querySelector('.status-indicator');
+  const cursorPos     = $el.querySelector('.cursor-pos');
+  const fileLabel     = $el.querySelector('.file-label');
+  const tabBar        = $el.querySelector('.tab-bar');
+  const tabAddBtn     = $el.querySelector('.tab-add');
+  const runBtn        = $el.querySelector('.run-btn');
+  const stopBtn       = $el.querySelector('.stop-btn');
+  const compilerSel   = $el.querySelector('.compiler-select');
+  const stdSel        = $el.querySelector('.std-select');
+  const stdinInput    = $el.querySelector('.stdin-input');
+  const compilerLabel = $el.querySelector('.compiler-label');
+
+  /* ── Вкладки ── */
+  let tabs = [], activeTabIdx = -1, nextId = 1;
+  let runningPid = null;
+
+  const DEFAULT_CODE =
+`#include <iostream>
+
+int main() {
+    std::cout << "Hello from C++ in OrexOS!" << std::endl;
+    return 0;
+}
+`;
+
+  function makeTab(name, path, code) {
+    return { id: nextId++, name: name || 'без имени', path: path || null,
+             code: code ?? DEFAULT_CODE, modified: false,
+             scrollTop: 0, selStart: 0, selEnd: 0 };
+  }
+
+  function esc(s) { const d = document.createElement('span'); d.textContent = s; return d.innerHTML; }
+
+  function renderTabs() {
+    tabBar.querySelectorAll('.tab').forEach(t => t.remove());
+    tabs.forEach((tab, i) => {
+      const el = document.createElement('div');
+      el.className = 'tab' + (i === activeTabIdx ? ' active' : '');
+      el.innerHTML = `<span>${tab.modified ? '<span class="modified">●</span> ' : ''}${esc(tab.name)}</span>
+        <span class="close-tab" data-idx="${i}">×</span>`;
+      el.addEventListener('click', e => { if (!e.target.classList.contains('close-tab')) switchTab(i); });
+      el.querySelector('.close-tab').addEventListener('click', e => { e.stopPropagation(); closeTab(i); });
+      tabBar.insertBefore(el, tabAddBtn);
+    });
+  }
+
+  function saveCurrentTab() {
+    if (activeTabIdx >= 0 && tabs[activeTabIdx]) {
+      const t = tabs[activeTabIdx];
+      t.code = editor.value;
+      t.scrollTop = editor.scrollTop;
+      t.selStart = editor.selectionStart;
+      t.selEnd = editor.selectionEnd;
+    }
+  }
+
+  function switchTab(idx) {
+    saveCurrentTab();
+    activeTabIdx = idx;
+    const t = tabs[idx];
+    editor.value = t.code;
+    editor.scrollTop = t.scrollTop;
+    editor.setSelectionRange(t.selStart, t.selEnd);
+    fileLabel.textContent = t.path || t.name;
+    updateLines();
+    renderTabs();
+    editor.focus();
+  }
+
+  async function closeTab(idx) {
+    const t = tabs[idx];
+    if (t.modified) {
+      const action = await kernel.dialog.choice('Сохранить изменения?', `"${t.name}" изменён.`, [
+        { id: 'save',    label: '💾 Сохранить', primary: true },
+        { id: 'discard', label: '🗑 Не сохранять' },
+        { id: 'cancel',  label: 'Отмена' },
+      ]);
+      if (action === 'cancel' || action === null) return;
+      if (action === 'save') { saveCurrentTab(); await doSave(t); }
+    }
+    tabs.splice(idx, 1);
+    if (tabs.length === 0) { addTab(); return; }
+    if (activeTabIdx >= tabs.length) activeTabIdx = tabs.length - 1;
+    switchTab(activeTabIdx);
+  }
+
+  function addTab(name, path, code) {
+    tabs.push(makeTab(name, path, code));
+    switchTab(tabs.length - 1);
+  }
+
+  /* ── Редактор ── */
+  function updateLines() {
+    const count = editor.value.split('\n').length;
+    let html = '';
+    for (let i = 1; i <= count; i++) html += i + '\n';
+    lineNums.textContent = html;
+  }
+
+  function updateCursorPos() {
+    const val = editor.value, pos = editor.selectionStart;
+    const before = val.substring(0, pos);
+    const line = before.split('\n').length;
+    const col  = pos - before.lastIndexOf('\n');
+    cursorPos.textContent = `Стр ${line}, Стб ${col}`;
+  }
+
+  function markModified() {
+    if (activeTabIdx >= 0 && tabs[activeTabIdx]) {
+      tabs[activeTabIdx].modified = true;
+      renderTabs();
+    }
+  }
+
+  editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = editor.selectionStart, en = editor.selectionEnd;
+      if (e.shiftKey) {
+        const val = editor.value, ls = val.lastIndexOf('\n', s - 1) + 1;
+        const lt = val.substring(ls, en);
+        if (lt.startsWith('    ')) {
+          editor.value = val.substring(0, ls) + lt.substring(4) + val.substring(en);
+          editor.selectionStart = Math.max(ls, s - 4);
+          editor.selectionEnd   = Math.max(ls, en - 4);
+        }
+      } else {
+        editor.value = editor.value.substring(0, s) + '    ' + editor.value.substring(en);
+        editor.selectionStart = editor.selectionEnd = s + 4;
+      }
+      markModified(); updateLines();
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const s = editor.selectionStart, val = editor.value;
+      const ls = val.lastIndexOf('\n', s - 1) + 1;
+      const cl = val.substring(ls, s);
+      const indent = cl.match(/^(\s*)/)[1];
+      const extra  = cl.trimEnd().endsWith('{') ? '    ' : '';
+      const ins = '\n' + indent + extra;
+      editor.value = val.substring(0, s) + ins + val.substring(editor.selectionEnd);
+      editor.selectionStart = editor.selectionEnd = s + ins.length;
+      markModified(); updateLines();
+    }
+  });
+
+  editor.addEventListener('input',  () => { updateLines(); markModified(); });
+  editor.addEventListener('scroll', () => { lineNums.scrollTop = editor.scrollTop; });
+  editor.addEventListener('click',  updateCursorPos);
+  editor.addEventListener('keyup',  updateCursorPos);
+
+  /* ── Ресайз панели вывода ── */
+  const divider     = $el.querySelector('.divider');
+  const bottomPanel = $el.querySelector('.bottom-panel');
+  const mainArea    = $el.querySelector('.main-area');
+
+  divider.addEventListener('mousedown', e => {
+    e.preventDefault();
+    const startY = e.clientY, startH = bottomPanel.offsetHeight;
+    const onMove = ev => {
+      const newH = Math.max(80, Math.min(mainArea.offsetHeight - 80, startH + startY - ev.clientY));
+      bottomPanel.style.height = newH + 'px';
+    };
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',  onUp);
+  });
+
+  /* ── Вывод ── */
+  function appendOutput(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    output.appendChild(span);
+    output.scrollTop = output.scrollHeight;
+  }
+  function clearOutput() { output.innerHTML = ''; }
+  $el.querySelector('.clear-output-btn').addEventListener('click', clearOutput);
+
+  /* ── Compiler label ── */
+  function updateCompilerLabel() {
+    compilerLabel.textContent = `${compilerSel.value} · ${stdSel.value} · Wandbox`;
+  }
+  compilerSel.addEventListener('change', updateCompilerLabel);
+  stdSel.addEventListener('change', updateCompilerLabel);
+
+  /* ── Сохранение ── */
+  async function doSave(tab) {
+    if (!tab.path) return await doSaveAs(tab);
+    const r = kernel.fs.write(tab.path, tab.code);
+    if (!r.ok) { await kernel.dialog.error('Ошибка сохранения', r.error); return false; }
+    tab.modified = false;
+    tab.name = tab.path.split('/').pop();
+    renderTabs();
+    fileLabel.textContent = tab.path;
+    setStatus('Сохранено: ' + tab.path);
+    return true;
+  }
+
+  async function doSaveAs(tab) {
+    const name = await kernel.dialog.prompt('Сохранить как', 'Путь к файлу:',
+      tab.path || '/home/user/documents/main.cpp');
+    if (!name) return false;
+    const dir = name.substring(0, name.lastIndexOf('/'));
+    if (dir && !kernel.fs.isDir(dir)) kernel.fs.mkdir(dir);
+    tab.path = name;
+    tab.code = editor.value;
+    return await doSave(tab);
+  }
+
+  async function doOpen() {
+    const path = await kernel.dialog.prompt('Открыть файл', 'Путь к .cpp файлу:',
+      '/home/user/documents/');
+    if (!path) return;
+    const content = kernel.fs.read(path);
+    if (content === null) { await kernel.dialog.error('Ошибка', 'Файл не найден: ' + path); return; }
+    const existing = tabs.findIndex(t => t.path === path);
+    if (existing >= 0) { switchTab(existing); return; }
+    addTab(path.split('/').pop(), path, content);
+  }
+
+  /* ── Запуск — просто spawnCli ── */
+  async function runCode() {
+    saveCurrentTab();
+    const tab = tabs[activeTabIdx];
+    if (!tab) return;
+
+    const code = tab.code.trim();
+    if (!code) { appendOutput('Нет кода для компиляции.\n', 'dim'); return; }
+
+    // Сохраняем во временный файл
+    const tmpPath = `/tmp/_cppide_${pid}_${Date.now()}.cpp`;
+    kernel.fs.write(tmpPath, tab.code);
+
+    // Собираем аргументы для cpp CLI
+    const cppArgs = [
+      tmpPath,
+      '--compiler', compilerSel.value,
+      '--std',      stdSel.value,
+    ];
+    const stdinData = stdinInput.value.trim();
+    if (stdinData) cppArgs.push('--stdin', stdinData);
+
+    clearOutput();
+    appendOutput(`── ${tab.name} (${compilerSel.value}, ${stdSel.value}) ──\n`, 'info');
+    if (stdinData) appendOutput(`── stdin: ${stdinData} ──\n`, 'dim');
+
+    setStatus('Компилируем...', 'running');
+    runBtn.style.display = 'none';
+    stopBtn.style.display = '';
+
+    const startTime = performance.now();
+
+    try {
+      const result = await kernel.spawnCli('cpp', cppArgs, {
+        onData:  chunk => { appendOutput(chunk);        output.scrollTop = output.scrollHeight; },
+        onError: chunk => { appendOutput(chunk, 'err'); output.scrollTop = output.scrollHeight; },
+        timeout: 60000,
+      });
+
+      runningPid = null;
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+
+      if (result.code === 0) {
+        appendOutput(`\n── Завершено за ${elapsed}с (код: 0) ──\n`, 'info');
+        setStatus(`Завершено за ${elapsed}с`);
+      } else {
+        appendOutput(`\n── Код выхода: ${result.code} (${elapsed}с) ──\n`, 'err');
+        setStatus(`Код выхода: ${result.code}`, 'error');
+      }
+    } catch (e) {
+      appendOutput('\n── Прервано / таймаут ──\n', 'err');
+      setStatus('Прервано', 'error');
+    } finally {
+      kernel.fs.rm(tmpPath);
+      runBtn.style.display = '';
+      stopBtn.style.display = 'none';
+    }
+  }
+
+  function stopCode() {
+    if (runningPid) { kernel.kill(runningPid); runningPid = null; }
+    setStatus('Остановлено', 'error');
+  }
+
+  function setStatus(text, state) {
+    statusText.textContent = text;
+    statusDot.className = 'status-indicator' + (state ? ' ' + state : '');
+  }
+
+  /* ── Кнопки ── */
+  $el.querySelector('.new-btn').addEventListener('click',    () => addTab());
+  $el.querySelector('.open-btn').addEventListener('click',   doOpen);
+  $el.querySelector('.save-btn').addEventListener('click',   () => { saveCurrentTab(); doSave(tabs[activeTabIdx]); });
+  $el.querySelector('.saveas-btn').addEventListener('click', () => { saveCurrentTab(); doSaveAs(tabs[activeTabIdx]); });
+  runBtn.addEventListener('click',  runCode);
+  stopBtn.addEventListener('click', stopCode);
+  tabAddBtn.addEventListener('click', () => addTab());
+
+  /* ── Горячие клавиши ── */
+  function handleKeydown(e) {
+    const wid = kernel.getProcess(pid)?.windowId;
+    if (!wid) return;
+    const win = document.getElementById(wid);
+    if (!win || !win.classList.contains('focused')) return;
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveCurrentTab(); doSave(tabs[activeTabIdx]); }
+    if (e.ctrlKey && e.key === 'o') { e.preventDefault(); doOpen(); }
+    if (e.ctrlKey && e.key === 'n') { e.preventDefault(); addTab(); }
+    if (e.key === 'F5')              { e.preventDefault(); runCode(); }
+  }
+  document.addEventListener('keydown', handleKeydown);
+
+  /* ── Открытие через args ── */
+  if (args?.path) {
+    const content = kernel.fs.read(args.path);
+    if (content !== null) addTab(args.path.split('/').pop(), args.path, content);
+    else addTab();
+  } else {
+    addTab();
+  }
+
+  /* ── Контекстное меню ── */
+  kernel.wm.setWindowContextMenu(pid, [
+    { label: '▶ Запустить (F5)',  action: runCode },
+    { separator: true },
+    { label: '📄 Новый файл',     action: () => addTab() },
+    { label: '📂 Открыть…',       action: doOpen },
+    { label: '💾 Сохранить',      action: () => { saveCurrentTab(); doSave(tabs[activeTabIdx]); } },
+    { separator: true },
+    { label: '🗑 Очистить вывод', action: clearOutput },
+  ]);
+
+  /* ── Cleanup ── */
+  kernel.onSignal(pid, () => {
+    document.removeEventListener('keydown', handleKeydown);
+    kernel.wm.clearWindowContextMenu(pid);
+    if (runningPid) kernel.kill(runningPid);
+  });
+}
+@end

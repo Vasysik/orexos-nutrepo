@@ -1,0 +1,172 @@
+#!/usr/bin/orex
+
+@manifest
+id:      cpp
+name:    C++ (GCC)
+icon:    ⚙️
+version: 2.1
+type:    cli
+bin:     true
+desc:    Настоящий C++ через GCC/Clang (Wandbox API)
+@end
+
+@script
+async function main(argv, stdout, stderr, stdin, kernel, pid) {
+
+    const WANDBOX_URL      = 'https://wandbox.org/api/compile.json';
+    const DEFAULT_COMPILER = 'gcc-head';
+    const DEFAULT_OPTIONS  = '-std=c++20 -O2 -Wall';
+
+    async function collectStdin() {
+        if (!stdin) return '';
+        const parts = [];
+        let line;
+        while ((line = await stdin()) !== null) parts.push(line);
+        return parts.join('\n');
+    }
+
+    async function runCode(code, stdinData, compiler, options) {
+        stdout(`[cpp] Компилируем (${compiler})...\n`);
+        let resp;
+        try {
+            resp = await fetch(WANDBOX_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, compiler, options, stdin: stdinData, save: false }),
+            });
+        } catch (e) {
+            stderr(`[cpp] Нет доступа к Wandbox: ${e.message}\n`);
+            return 1;
+        }
+        if (!resp.ok) { stderr(`[cpp] Wandbox HTTP ${resp.status}\n`); return 1; }
+
+        let json;
+        try { json = await resp.json(); } catch { stderr('[cpp] Ошибка ответа\n'); return 1; }
+
+        if (json.compiler_output?.trim()) stderr(json.compiler_output + '\n');
+        if (json.compiler_error?.trim())  stderr(json.compiler_error  + '\n');
+        if (json.program_output)          stdout(json.program_output);
+        if (json.program_error)           stderr(json.program_error);
+        if (json.signal)                  stderr(`[cpp] Сигнал: ${json.signal}\n`);
+
+        return parseInt(json.status ?? '0', 10);
+    }
+
+    let compiler      = DEFAULT_COMPILER;
+    let options       = DEFAULT_OPTIONS;
+    let fileArg       = null;
+    let inlineCode    = null;
+    let pipeMode      = false;  // --pipe: КОД приходит из stdin
+    let progStdin     = '';     // --stdin "...": данные для cin внутри программы
+    let progStdinFile = null;   // --stdin-file PATH
+
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (a === '--compiler'   && argv[i+1]) { compiler = argv[++i]; continue; }
+        if (a === '--std'        && argv[i+1]) { options = options.replace(/-std=\S+/, '').trim() + ' -std=' + argv[++i]; continue; }
+        if (a === '--options'    && argv[i+1]) { options = argv[++i]; continue; }
+        if (a === '--stdin'      && argv[i+1]) { progStdin = argv[++i]; continue; }
+        if (a === '--stdin-file' && argv[i+1]) { progStdinFile = argv[++i]; continue; }
+        if (a === '--clang')     { compiler = 'clang-head'; continue; }
+        if (a === '--gcc')       { compiler = 'gcc-head';   continue; }
+        if (a === '--pipe')      { pipeMode = true; continue; }
+        if (a === '-c' && argv[i+1]) { inlineCode = argv[++i]; continue; }
+        if (a === '--help') {
+            stdout(
+`cpp — настоящий C++ через Wandbox (GCC/Clang)
+
+Использование: cpp [ФАЙЛ] [ОПЦИИ]
+
+  ФАЙЛ                 запустить .cpp файл
+  -c "КОД"             запустить код из аргумента
+  --pipe               читать КОД из stdin (для пайпов)
+  --stdin "ДАННЫЕ"     передать строку в cin программы
+  --stdin-file PATH    передать файл в cin программы
+  --gcc                GCC HEAD (по умолчанию)
+  --clang              Clang HEAD
+  --compiler NAME      gcc-13, gcc-12, clang-17, clang-16...
+  --std VERSION        c++14 / c++17 / c++20 / c++23
+  --options "..."      полностью заменить флаги компилятора
+  --help               эта справка
+
+В REPL:  два пустых Enter = запуск
+         :compiler NAME  = сменить компилятор
+         :exit           = выход
+`);
+            return 0;
+        }
+        if (!a.startsWith('-')) fileArg = a;
+    }
+
+    const cwd = kernel.getProcess(pid)?.cwd ?? '/home/user';
+
+    // Если указан --stdin-file — читаем его содержимое
+    if (progStdinFile) {
+        let sfPath = progStdinFile;
+        if (!sfPath.startsWith('/')) sfPath = kernel.fs.normalize(cwd + '/' + sfPath);
+        progStdin = kernel.fs.read(sfPath) ?? '';
+    }
+
+    // Режим: -c "код" — stdin не трогаем
+    if (inlineCode !== null) {
+        return await runCode(inlineCode, progStdin, compiler, options);
+    }
+
+    // Режим: файл — stdin не трогаем
+    if (fileArg) {
+        let path = fileArg;
+        if (!path.startsWith('/')) path = kernel.fs.normalize(cwd + '/' + path);
+        if (!kernel.fs.exists(path)) {
+            stderr(`cpp: cannot open '${fileArg}': No such file or directory\n`);
+            return 1;
+        }
+        return await runCode(kernel.fs.read(path), progStdin, compiler, options);
+    }
+
+    // Режим: явный пайп — КОД из stdin
+    if (pipeMode) {
+        const code = await collectStdin();
+        if (!code.trim()) { stderr('[cpp] Нет кода в stdin\n'); return 1; }
+        return await runCode(code, progStdin, compiler, options);
+    }
+
+    // Всё остальное — REPL
+    stdout(`C++ REPL on OrexOS — Wandbox (настоящий GCC HEAD)\n`);
+    stdout(`Два пустых Enter — запуск.  :compiler NAME — сменить.  :exit — выход.\n`);
+    stdout(`Текущий компилятор: ${compiler}\n\n`);
+
+    if (!stdin) { stderr('Терминал не поддерживает интерактивный ввод.\n'); return 1; }
+
+    while (true) {
+        stdout('cpp> ');
+        const lines = [];
+        let empties = 0;
+        let skip = false;
+
+        while (true) {
+            const line = await stdin();
+            if (line === null) { stdout('\n'); return 0; }
+            if (line.trimStart().startsWith(':exit')) return 0;
+            if (line.trimStart().startsWith(':compiler ')) {
+                compiler = line.slice(line.indexOf(' ') + 1).trim();
+                stdout(`[cpp] Компилятор: ${compiler}\n`);
+                skip = true; break;
+            }
+            if (line.trim() === '') { if (++empties >= 2) break; }
+            else empties = 0;
+            lines.push(line);
+        }
+
+        if (skip) continue;
+        const code = lines.join('\n').trim();
+        if (!code) continue;
+
+        const finalCode = (code.includes('main(') || code.includes('main ('))
+            ? code
+            : `#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\nint main(){\n${code}\nreturn 0;\n}`;
+
+        await runCode(finalCode, '', compiler, options);
+        stdout('\n');
+    }
+}
+@end

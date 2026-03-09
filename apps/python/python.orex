@@ -18,7 +18,7 @@ async function main(argv, stdout, stderr, stdin, kernel, pid) {
   if (!pyodide) {
     if (!argv[0]) stdout("Загрузка Python 3 (Pyodide Wasm). Подождите...\n");
     try {
-      const pyodideModule = await import('https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.mjs');
+      const pyodideModule = await import('https://cdn.jsdelivr.net/pyodide/v0.29.3/full/pyodide.mjs');
       
       // Инициализируем с пустыми заглушками, так как мы будем менять их ниже
       pyodide = await pyodideModule.loadPyodide();
