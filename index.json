@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-09T14:06:44.913749+00:00",
+  "generated": "2026-03-09T14:11:15.096758+00:00",
   "apps": [
     {
       "id": "minecraft-classic",
@@ -20,17 +20,16 @@
     {
       "id": "nutstore",
       "name": "NutStore",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "categories": [
-        "system",
-        "store"
+        "system"
       ],
       "description": "Магазин приложений OrexOS. Устанавливай, обновляй и удаляй приложения из репозитория.",
       "icon": "🥜",
       "file": "nutstore.orex",
       "deps": [],
       "author": "Orexia Systems",
-      "size": 24875,
+      "size": 24835,
       "downloadUrl": "apps/nutstore/nutstore.orex"
     },
     {
@@ -38,8 +37,8 @@
       "name": "Python 3",
       "version": "1.1.0",
       "categories": [
-        "system",
-        "coding"
+        "development",
+        "cli"
       ],
       "description": "Интерпретатор Python (Pyodide Wasm)",
       "icon": "🐍",
@@ -54,7 +53,7 @@
       "name": "Python IDE",
       "version": "1.0.0",
       "categories": [
-        "coding"
+        "development"
       ],
       "description": "IDE для написания и запуска Python-скриптов.",
       "icon": "🐍",
@@ -68,9 +67,9 @@
     }
   ],
   "categories": [
-    "coding",
+    "cli",
+    "development",
     "games",
-    "store",
     "system"
   ]
 }
