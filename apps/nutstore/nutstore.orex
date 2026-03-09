@@ -4,7 +4,7 @@
 id:      nutstore
 name:    NutStore
 icon:    🥜
-version: 1.0.2
+version: 1.0.3
 type:    gui
 size:    720x520
 single:  true
@@ -263,7 +263,6 @@ function init($el, kernel, pid, args) {
   /* ─── Константы ─── */
   const REPO_BASE = 'https://raw.githubusercontent.com/Vasysik/orexos-nutrepo/main/';
   const INDEX_URL = REPO_BASE + 'index.json';
-  const STATE_KEY = 'nutstore:installed';
 
   /* ─── DOM ─── */
   const sidebar     = $el.querySelector('#ns-sidebar');
@@ -276,9 +275,9 @@ function init($el, kernel, pid, args) {
   const statusText  = $el.querySelector('#ns-status-text');
 
   /* ─── Состояние ─── */
-  let catalog      = null;     // данные из index.json
-  let installedMap = {};       // id → { version, path, installedAt }
-  let activeCategory = null;   // null = все
+  let catalog      = null;
+  let installedMap = {};       // Данные генерируются на лету из файловой системы!
+  let activeCategory = null;
   let searchQuery  = '';
   let busy         = false;
 
@@ -302,27 +301,40 @@ function init($el, kernel, pid, args) {
     return CAT_LABELS[id] || ('📁 ' + id.charAt(0).toUpperCase() + id.slice(1));
   }
 
-  /* ─── Загрузка данных об установленных ─── */
-  function loadInstalled() {
-    installedMap = kernel.state.load(STATE_KEY, {});
-  }
-  function saveInstalled() {
-    kernel.state.save(STATE_KEY, installedMap);
-  }
+  /* ─── ЧТЕНИЕ РЕАЛЬНОЙ ФАЙЛОВОЙ СИСТЕМЫ ─── */
+  // Эта функция читает файлы с диска и парсит их версии. 
+  // Никаких сохранений в localStorage (kernel.state).
+  function syncWithFS() {
+    installedMap = {};
+    if (!catalog) return;
 
-  /* ─── Проверка — установлено ли ─── */
-  function getInstalledInfo(appId) {
-    // Сначала из нашей записи
-    if (installedMap[appId]) return installedMap[appId];
-    // Потом из ядра (уже зарегистрировано, но мы не знали)
-    const app = kernel.getApp(appId);
-    if (app) {
-      return { version: app.manifest?.version || '?', path: '?', installedAt: '?' };
+    for (const app of catalog.apps) {
+      const ext = (app.file || 'orex').split('.').pop();
+      const filePath = `/apps/${app.id}.${ext}`;
+
+      try {
+        let content = kernel.fs.read(filePath);
+        // Защита: разные версии ядра могут возвращать строку или объект {ok: true, data: ...}
+        let text = typeof content === 'string' ? content : (content && content.data ? content.data : null);
+
+        if (text) {
+          // Файл физически существует. Вытаскиваем версию регуляркой прямо из кода.
+          const vMatch = text.match(/version:\s*([^\r\n]+)/);
+          installedMap[app.id] = {
+            version: vMatch ? vMatch[1].trim() : '?',
+            path: filePath
+          };
+        }
+      } catch (e) {
+        // Файл не найден — значит не установлено
+      }
     }
-    return null;
   }
 
-  /* ─── Сравнение версий (простое) ─── */
+  function getInstalledInfo(appId) {
+    return installedMap[appId] || null;
+  }
+
   function isNewer(remoteVer, localVer) {
     if (!localVer || localVer === '?') return true;
     const r = remoteVer.split('.').map(Number);
@@ -335,7 +347,6 @@ function init($el, kernel, pid, args) {
     return false;
   }
 
-  /* ─── Фильтрация ─── */
   function getFilteredApps() {
     if (!catalog || !catalog.apps) return [];
     let apps = catalog.apps;
@@ -354,7 +365,6 @@ function init($el, kernel, pid, args) {
     return apps;
   }
 
-  /* ─── Рендер сайдбара ─── */
   function renderSidebar() {
     if (!catalog) { sidebar.innerHTML = ''; return; }
     const cats = catalog.categories || [];
@@ -366,18 +376,15 @@ function init($el, kernel, pid, args) {
       html += `<div class="ns-cat-item${active}" data-cat="${c}">${catLabel(c)} (${count})</div>`;
     }
     sidebar.innerHTML = html;
-
     sidebar.querySelectorAll('.ns-cat-item').forEach(el => {
       el.addEventListener('click', () => {
-        const cat = el.dataset.cat;
-        activeCategory = cat === '__all__' ? null : cat;
+        activeCategory = el.dataset.cat === '__all__' ? null : el.dataset.cat;
         renderSidebar();
         renderGrid();
       });
     });
   }
 
-  /* ─── Рендер сетки приложений ─── */
   function renderGrid() {
     const apps = getFilteredApps();
     if (apps.length === 0) {
@@ -424,7 +431,6 @@ function init($el, kernel, pid, args) {
     content.innerHTML = html;
     statusLeft.textContent = `Приложений: ${apps.length}`;
 
-    // Обработчики кнопок
     content.querySelectorAll('button[data-action]').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -435,14 +441,11 @@ function init($el, kernel, pid, args) {
         else if (action === 'launch') launchApp(id);
       });
     });
-
-    // Клик по карточке — детали
     content.querySelectorAll('.ns-card').forEach(card => {
       card.addEventListener('dblclick', () => showDetail(card.dataset.id));
     });
   }
 
-  /* ─── Детальный просмотр ─── */
   function showDetail(appId) {
     const app = catalog.apps.find(a => a.id === appId);
     if (!app) return;
@@ -500,78 +503,69 @@ function init($el, kernel, pid, args) {
     $el.appendChild(overlay);
   }
 
-  /* ─── Установка с зависимостями (рекурсивная) ─── */
   async function installApp(appId, _depChain = new Set()) {
     if (busy) return;
-    if (_depChain.has(appId)) {
-      console.warn('[NutStore] Циклическая зависимость:', appId);
-      return;
-    }
+    if (_depChain.has(appId)) return;
     _depChain.add(appId);
 
     const app = catalog.apps.find(a => a.id === appId);
-    if (!app) {
-      await kernel.dialog.error('NutStore', `Приложение "${appId}" не найдено в каталоге.`);
-      return;
-    }
+    if (!app) return;
 
     busy = true;
     setStatus(`Установка ${app.name}...`);
 
     try {
-      // 1. Рекурсивно ставим зависимости
       if (app.deps && app.deps.length > 0) {
         for (const depId of app.deps) {
           const depInstalled = getInstalledInfo(depId);
           const depInCatalog = catalog.apps.find(a => a.id === depId);
-          const depNeedsInstall = !depInstalled || (depInCatalog && isNewer(depInCatalog.version, depInstalled.version));
-
-          if (depNeedsInstall) {
+          if (!depInstalled || (depInCatalog && isNewer(depInCatalog.version, depInstalled.version))) {
             setStatus(`Зависимость: ${depId}...`);
-            busy = false; // разрешаем рекурсию
+            busy = false; 
             await installApp(depId, _depChain);
             busy = true;
           }
         }
       }
 
-      // 2. Скачиваем файл
       setStatus(`Скачивание ${app.name}...`);
       const url = REPO_BASE + app.downloadUrl;
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const code = await res.text();
 
-      // 3. Определяем расширение и путь
       const ext = (app.file || 'orex').split('.').pop();
       const filePath = `/apps/${app.id}.${ext}`;
 
-      // 4. Пишем в ФС
       setStatus(`Сохранение ${app.name}...`);
       const wr = kernel.fs.write(filePath, code);
-      if (!wr.ok) throw new Error('Ошибка записи: ' + (wr.error || '?'));
+      if (wr && typeof wr === 'object' && !wr.ok) throw new Error('Ошибка записи: ' + (wr.error || '?'));
 
-      // 5. Регистрируем в ядре
       setStatus(`Регистрация ${app.name}...`);
       await kernel.launchOrex(filePath, { _registerOnly: true });
 
-      // 6. Записываем в installed
-      installedMap[app.id] = {
-        version: app.version,
-        path: filePath,
-        installedAt: new Date().toISOString(),
-      };
-      saveInstalled();
+      // Обновляем список из ФАЙЛОВОЙ СИСТЕМЫ, а не из воздуха
+      syncWithFS();
 
-      // 7. Ярлык на рабочий стол (если не библиотека и не cli-only)
       const isLib = (app.categories || []).includes('library');
       if (!isLib) {
-        kernel.fs.write(`/home/user/desktop/${app.id}.lnk`, JSON.stringify({
-          appId: app.id,
-          icon: app.icon || '📦',
-          name: app.name,
-        }));
-        kernel.emit('desktop:refresh');
+        const lnkPath = `/home/user/desktop/${app.id}.lnk`;
+        let lnkExists = false;
+        try {
+          const check = kernel.fs.read(lnkPath);
+          if (check && (typeof check === 'string' || check.data)) lnkExists = true;
+        } catch(e) {}
+
+        // ИСПРАВЛЕНИЕ ЯРЛЫКОВ: Создаем ярлык ТОЛЬКО если его физически нет.
+        // Если он есть - мы его не трогаем, чтобы не сбить кастомное имя.
+        if (!lnkExists) {
+          kernel.fs.write(lnkPath, JSON.stringify({
+            appId: app.id,
+            icon: app.icon || '📦',
+            name: app.name,
+          }));
+          kernel.emit('desktop:refresh');
+        }
       }
 
       setStatus(`✅ ${app.name} установлен!`);
@@ -586,7 +580,6 @@ function init($el, kernel, pid, args) {
     }
   }
 
-  /* ─── Удаление ─── */
   async function removeApp(appId) {
     const inst = installedMap[appId];
     if (!inst && !kernel.getApp(appId)) return;
@@ -597,47 +590,29 @@ function init($el, kernel, pid, args) {
     const ok = await kernel.dialog.confirm('Удаление', `Удалить "${name}"?`);
     if (!ok) return;
 
-    // Убиваем процессы
     const procs = kernel.getProcesses().filter(p => p.appId === appId);
     for (const p of procs) kernel.kill(p.pid);
 
-    // Удаляем файл
     if (inst && inst.path && inst.path !== '?') {
       kernel.fs.rm(inst.path);
     }
 
-    // Удаляем ярлык
     kernel.fs.rm(`/home/user/desktop/${appId}.lnk`);
     kernel.emit('desktop:refresh');
-
-    // Снимаем регистрацию
     kernel.unregisterApp(appId);
 
-    // Убираем из записей
-    delete installedMap[appId];
-    saveInstalled();
+    // Синхронизация с диском после удаления
+    syncWithFS();
 
     setStatus(`🗑 ${name} удалён`);
     renderGrid();
   }
 
-  /* ─── Запуск ─── */
-  function launchApp(appId) {
-    kernel.launch(appId);
-  }
+  function launchApp(appId) { kernel.launch(appId); }
 
-  /* ─── Самообновление ─── */
   async function selfUpdate() {
     if (busy) return;
-    if (!catalog) {
-      await kernel.dialog.error('NutStore', 'Сначала загрузите каталог.');
-      return;
-    }
     const self = catalog.apps.find(a => a.id === 'nutstore');
-    if (!self) {
-      await kernel.dialog.alert('NutStore', 'NutStore не найден в каталоге.');
-      return;
-    }
     const inst = getInstalledInfo('nutstore');
     if (inst && !isNewer(self.version, inst.version)) {
       await kernel.dialog.alert('NutStore', `У вас актуальная версия (v${inst.version}).`);
@@ -649,32 +624,17 @@ function init($el, kernel, pid, args) {
     if (!ok) return;
 
     busy = true;
-    setStatus('Скачивание обновления NutStore...');
-
+    setStatus('Скачивание обновления...');
     try {
-      const url = REPO_BASE + self.downloadUrl;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(REPO_BASE + self.downloadUrl);
       const code = await res.text();
-      const filePath = `/apps/nutstore.orex`;
-      const wr = kernel.fs.write(filePath, code);
-      if (!wr.ok) throw new Error('Ошибка записи: ' + (wr.error || '?'));
-
-      installedMap['nutstore'] = {
-        version: self.version,
-        path: filePath,
-        installedAt: new Date().toISOString(),
-      };
-      saveInstalled();
-
-      // Перерегистрируем и перезапускаем
-      await kernel.launchOrex(filePath, { _registerOnly: true });
-
+      kernel.fs.write(`/apps/nutstore.orex`, code);
+      
+      syncWithFS();
+      await kernel.launchOrex(`/apps/nutstore.orex`, { _registerOnly: true });
       await kernel.dialog.alert('NutStore', '✅ Обновлено! Перезапустите NutStore.');
-      // Закрываем текущее окно
       const wid = kernel.getProcess(pid)?.windowId;
       if (wid) kernel.wm.closeWindow(wid);
-
     } catch (err) {
       await kernel.dialog.error('Ошибка обновления', err.message);
     } finally {
@@ -682,40 +642,34 @@ function init($el, kernel, pid, args) {
     }
   }
 
-  /* ─── Загрузка каталога ─── */
   async function loadCatalog() {
     setStatus('Загрузка каталога...');
     content.innerHTML = '<div class="ns-loading">🥜 Загрузка каталога...</div>';
 
     try {
       const res = await fetch(INDEX_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       catalog = await res.json();
-
-      // Кэшируем
       kernel.state.save('nutstore:catalog-cache', catalog);
-
+      
       statusRight.textContent = `Обновлено: ${new Date(catalog.generated || Date.now()).toLocaleString()}`;
       setStatus(`Загружено: ${catalog.apps.length} приложений`);
 
+      // КАК ТОЛЬКО СКАЧАЛИ КАТАЛОГ — ПРОВЕРЯЕМ ДИСК
+      syncWithFS();
       renderSidebar();
       renderGrid();
 
     } catch (err) {
-      console.error('[NutStore] Fetch error:', err);
-
-      // Пробуем кэш
       const cached = kernel.state.load('nutstore:catalog-cache', null);
       if (cached) {
         catalog = cached;
         statusRight.textContent = '(из кэша)';
-        setStatus(`Офлайн-режим: ${catalog.apps.length} приложений`);
+        syncWithFS();
         renderSidebar();
         renderGrid();
-        await kernel.dialog.warning('NutStore', 'Не удалось загрузить каталог.\nПоказаны данные из кэша.\n\n' + err.message);
       } else {
-        content.innerHTML = `<div class="ns-empty">❌ Не удалось загрузить каталог.<br><br>${esc(err.message)}<br><br>Нажмите 🔄 Обновить для повторной попытки.</div>`;
-        setStatus('Ошибка загрузки');
+        content.innerHTML = `<div class="ns-empty">❌ Ошибка сети.<br><br>Нажмите 🔄 Обновить.</div>`;
       }
     }
   }
@@ -734,37 +688,24 @@ function init($el, kernel, pid, args) {
   function setStatus(text) {
     statusLeft.textContent = text;
     statusText.textContent = text;
-    // Очищаем toolbar-статус через 3 секунды
     clearTimeout(setStatus._t);
     setStatus._t = setTimeout(() => { statusText.textContent = ''; }, 3000);
   }
 
-  /* ─── Поиск ─── */
   let searchTimer;
   searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-      searchQuery = searchInput.value.trim();
-      renderGrid();
-    }, 250);
+    searchTimer = setTimeout(() => { searchQuery = searchInput.value.trim(); renderGrid(); }, 250);
   });
 
-  /* ─── Кнопки ─── */
   btnRefresh.addEventListener('click', () => loadCatalog());
   btnSelf.addEventListener('click', () => selfUpdate());
 
-  /* ─── Контекстное меню ─── */
   kernel.wm.setWindowContextMenu(pid, [
     { label: '🔄 Обновить каталог', action: () => loadCatalog() },
     { label: '🥜 Обновить NutStore', action: () => selfUpdate() },
-    { separator: true },
-    { label: '🗑 Очистить кэш', action: () => {
-      kernel.state.save('nutstore:catalog-cache', null);
-      kernel.dialog.alert('NutStore', 'Кэш очищен.');
-    }},
   ]);
 
-  /* ─── Cleanup ─── */
   kernel.onSignal(pid, () => {
     clearTimeout(searchTimer);
     clearTimeout(setStatus._t);
@@ -772,7 +713,6 @@ function init($el, kernel, pid, args) {
   });
 
   /* ─── Старт ─── */
-  loadInstalled();
   loadCatalog();
 }
 @end
