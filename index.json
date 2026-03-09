@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-09T16:45:27.174423+00:00",
+  "generated": "2026-03-09T19:34:39.233017+00:00",
   "apps": [
     {
       "id": "cpp",
@@ -66,6 +66,21 @@
       "downloadUrl": "apps/nutstore/nutstore.orex"
     },
     {
+      "id": "orexplorer",
+      "name": "Orexplorer",
+      "version": "1.0.0",
+      "categories": [
+        "network"
+      ],
+      "description": "Ультимативный веб-браузер OrexOS",
+      "icon": "🌐",
+      "file": "orexplorer.orex",
+      "deps": [],
+      "author": "Orexia Systems",
+      "size": 4531,
+      "downloadUrl": "apps/orexplorer/orexplorer.orex"
+    },
+    {
       "id": "python",
       "name": "Python 3",
       "version": "1.1.2",
@@ -103,6 +118,7 @@
     "cli",
     "development",
     "games",
+    "network",
     "system"
   ]
 }
