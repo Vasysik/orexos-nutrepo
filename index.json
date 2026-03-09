@@ -1,7 +1,40 @@
 {
   "version": 1,
-  "generated": "2026-03-09T14:11:15.096758+00:00",
+  "generated": "2026-03-09T15:58:31.144801+00:00",
   "apps": [
+    {
+      "id": "cpp",
+      "name": "C++ (GCC)",
+      "version": "2.1.0",
+      "categories": [
+        "development",
+        "cli"
+      ],
+      "description": "Компилятор C++ через GCC/Clang (Wandbox API).",
+      "icon": "⚙️",
+      "file": "cpp.orex",
+      "deps": [],
+      "author": "Orexia Systems",
+      "size": 6978,
+      "downloadUrl": "apps/cpp/cpp.orex"
+    },
+    {
+      "id": "cpp-ide",
+      "name": "C++ IDE",
+      "version": "1.0.0",
+      "categories": [
+        "development"
+      ],
+      "description": "IDE для написания и запуска C++ кода.",
+      "icon": "⚙️",
+      "file": "cpp-ide.orex",
+      "deps": [
+        "cpp"
+      ],
+      "author": "Orexia Systems",
+      "size": 22270,
+      "downloadUrl": "apps/cpp-ide/cpp-ide.orex"
+    },
     {
       "id": "minecraft-classic",
       "name": "Minecraft",
@@ -35,7 +68,7 @@
     {
       "id": "python",
       "name": "Python 3",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "categories": [
         "development",
         "cli"
