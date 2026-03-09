@@ -2,7 +2,7 @@
   "id": "python-ide",
   "name": "Python IDE",
   "version": "1.0.0",
-  "categories": ["coding"],
+  "categories": ["development"],
   "description": "IDE для написания и запуска Python-скриптов.",
   "icon": "🐍",
   "file": "python-ide.orex",

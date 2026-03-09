@@ -2,7 +2,7 @@
   "id": "python",
   "name": "Python 3",
   "version": "1.1.0",
-  "categories": ["system", "coding"],
+  "categories": ["development", "cli"],
   "description": "Интерпретатор Python (Pyodide Wasm)",
   "icon": "🐍",
   "file": "python.orex",

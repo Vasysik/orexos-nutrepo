@@ -1,8 +1,8 @@
 {
   "id": "nutstore",
   "name": "NutStore",
-  "version": "1.0.0",
-  "categories": ["system", "store"],
+  "version": "1.0.1",
+  "categories": ["system"],
   "description": "Магазин приложений OrexOS. Устанавливай, обновляй и удаляй приложения из репозитория.",
   "icon": "🥜",
   "file": "nutstore.orex",

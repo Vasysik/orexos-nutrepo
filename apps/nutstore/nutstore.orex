@@ -284,7 +284,6 @@ function init($el, kernel, pid, args) {
   /* ─── Имена категорий (UI) ─── */
   const CAT_LABELS = {
     system:      '⚙️ Система',
-    store:       '🏪 Магазин',
     games:       '🎮 Игры',
     utilities:   '🔧 Утилиты',
     monitoring:  '📊 Мониторинг',
