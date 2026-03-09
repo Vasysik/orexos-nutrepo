@@ -306,48 +306,38 @@ function init($el, kernel, pid, args) {
   // Никаких сохранений в localStorage (kernel.state).
   function syncWithFS() {
     installedMap = {};
-    let files = [];
+    const items = kernel.fs.ls('/apps/');
     
-    try {
-      // 1. Получаем список всего, что лежит в /apps/
-      const lsResult = kernel.fs.ls('/apps/');
-      // ls может вернуть как массив, так и объект {ok, data}, обрабатываем оба
-      files = Array.isArray(lsResult) ? lsResult : (lsResult.ok && Array.isArray(lsResult.data) ? lsResult.data : []);
-    } catch (e) {
-      // Папки /apps/ может не существовать. Это нормально.
-      console.warn('[NutStore] Directory /apps/ not found. Assuming nothing is installed.');
-      return; 
+    if (!items || !Array.isArray(items)) {
+      console.log('[NutStore] /apps/ is empty or missing.');
+      return;
     }
 
-    // 2. Проходим по каждому найденному файлу
-    for (const filename of files) {
-      // Нас интересуют только .orex файлы
-      if (!filename.endsWith('.orex')) continue;
+    for (const item of items) {
+      if (item.type !== 'file') continue; 
+      if (!item.name.endsWith('.orex')) continue;
 
-      const filePath = `/apps/${filename}`;
       try {
-        // 3. Читаем содержимое файла
-        const content = kernel.fs.read(filePath);
-        const text = typeof content === 'string' ? content : (content && content.data ? content.data : '');
+        const text = kernel.fs.read(item.path);
 
-        if (text) {
-          // 4. Парсим ID и ВЕРСИЮ прямо из манифеста в коде
-          const idMatch = text.match(/id:\s*([^\r\n]+)/);
-          const vMatch = text.match(/version:\s*([^\r\n]+)/);
+        if (text && typeof text === 'string') {
+          const idMatch = text.match(/^id:\s*([^\r\n#]+)/m);
+          const vMatch = text.match(/^version:\s*([^\r\n#]+)/m);
 
           if (idMatch && vMatch) {
             const appId = idMatch[1].trim();
-            // 5. Записываем в нашу карту установленных
+            const version = vMatch[1].trim();
             installedMap[appId] = {
-              version: vMatch[1].trim(),
-              path: filePath
+              version: version,
+              path: item.path
             };
           }
         }
       } catch (e) {
-        console.warn(`[NutStore] Failed to read or parse ${filePath}`, e);
+        console.error(`[NutStore] Ошибка парсинга ${item.path}:`, e);
       }
     }
+    console.log('[NutStore] Синхронизация завершена. Найдено:', Object.keys(installedMap).length);
   }
 
   function getInstalledInfo(appId) {
