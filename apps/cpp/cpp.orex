@@ -4,10 +4,11 @@
 id:      cpp
 name:    C++ (GCC)
 icon:    ⚙️
-version: 2.1
+version: 2.1.1
 type:    cli
 bin:     true
 desc:    Настоящий C++ через GCC/Clang (Wandbox API)
+author:  Orexia Systems
 @end
 
 @script

@@ -4,11 +4,12 @@
 id:      nutstore
 name:    NutStore
 icon:    🥜
-version: 1.0.1
+version: 1.0.2
 type:    gui
 size:    720x520
 single:  true
-desc:    Магазин приложений OrexOS
+desc:    Магазин приложений OrexOS. Устанавливай, обновляй и удаляй приложения из репозитория.
+author:  Orexia Systems
 @end
 
 @style

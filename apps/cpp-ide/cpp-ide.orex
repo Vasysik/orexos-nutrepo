@@ -4,12 +4,13 @@
 id:      cpp-ide
 name:    C++ IDE
 icon:    ⚙️
-version: 1.0
+version: 1.0.1
 type:    gui
 size:    860x600
 single:  false
 deps:    cpp
 desc:    IDE для написания и запуска C++ кода
+author:  Orexia Systems
 @end
 
 @style

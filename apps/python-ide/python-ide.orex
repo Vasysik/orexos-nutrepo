@@ -4,12 +4,13 @@
 id:      python-ide
 name:    Python IDE
 icon:    🐍
-version: 1.0
+version: 1.0.1
 type:    gui
 size:    820x560
 single:  true
 deps:    python
 desc:    IDE для написания и запуска Python-скриптов
+author:  Orexia Systems
 @end
 
 @style

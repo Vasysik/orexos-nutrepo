@@ -1,11 +1,3 @@
 {
-  "id": "cpp",
-  "name": "C++ (GCC)",
-  "version": "2.1.0",
-  "categories": ["development", "cli"],
-  "description": "Компилятор C++ через GCC/Clang (Wandbox API).",
-  "icon": "⚙️",
-  "file": "cpp.orex",
-  "deps": [],
-  "author": "Orexia Systems"
+  "categories": ["development", "cli"]
 }

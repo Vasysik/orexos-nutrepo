@@ -5,10 +5,12 @@
 id:      minecraft-classic
 name:    Minecraft
 icon:    ⛏️
-version: 1.0
+version: 1.0.1
 type:    gui
 size:    850x600
 single:  true
+desc:    Тот самый Minecraft для OrexOS
+author:  Mojang Studios
 @end
 
 @style
