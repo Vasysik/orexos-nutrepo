@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-09T16:30:15.468975+00:00",
+  "generated": "2026-03-09T16:41:02.696798+00:00",
   "apps": [
     {
       "id": "cpp",
@@ -53,7 +53,7 @@
     {
       "id": "nutstore",
       "name": "NutStore",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "categories": [
         "system"
       ],
@@ -62,7 +62,7 @@
       "file": "nutstore.orex",
       "deps": [],
       "author": "Orexia Systems",
-      "size": 22781,
+      "size": 23654,
       "downloadUrl": "apps/nutstore/nutstore.orex"
     },
     {
