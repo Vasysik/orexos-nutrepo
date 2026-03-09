@@ -1,0 +1,778 @@
+#!/usr/bin/orex
+
+@manifest
+id:      nutstore
+name:    NutStore
+icon:    🥜
+version: 1.0.0
+type:    gui
+size:    720x520
+single:  true
+desc:    Магазин приложений OrexOS
+@end
+
+@style
+:root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: "MS Sans Serif", Arial, sans-serif;
+  font-size: 12px;
+  background: #c0c0c0;
+  overflow: hidden;
+}
+
+.ns-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  flex-shrink: 0;
+}
+.ns-toolbar button {
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.ns-toolbar .ns-search {
+  flex: 1;
+  margin-left: 8px;
+  padding: 2px 4px;
+  font-size: 12px;
+  border: 2px inset #fff;
+}
+.ns-toolbar .ns-status-text {
+  font-size: 11px;
+  color: #444;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.ns-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.ns-sidebar {
+  width: 150px;
+  background: #fff;
+  border-right: 2px groove #c0c0c0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.ns-cat-item {
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ns-cat-item:hover { background: #e8e8e8; }
+.ns-cat-item.active {
+  background: #000080;
+  color: #fff;
+}
+
+.ns-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #fff;
+  min-width: 0;
+}
+
+.ns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  padding: 8px;
+}
+
+.ns-card {
+  border: 2px outset #c0c0c0;
+  background: #f0f0f0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: default;
+  min-height: 120px;
+}
+.ns-card:hover { background: #e8e8ff; }
+
+.ns-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ns-card-icon { font-size: 28px; line-height: 1; }
+.ns-card-title {
+  font-weight: bold;
+  font-size: 12px;
+  word-break: break-word;
+}
+.ns-card-ver {
+  font-size: 10px;
+  color: #666;
+}
+.ns-card-desc {
+  font-size: 11px;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.ns-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.ns-card-cats {
+  font-size: 9px;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.ns-card-footer button {
+  font-size: 11px;
+  padding: 2px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ns-btn-install { background: #4a4; color: #fff; border: 2px outset #6c6; }
+.ns-btn-install:hover { background: #393; }
+.ns-btn-install:active { border-style: inset; }
+.ns-btn-update { background: #48c; color: #fff; border: 2px outset #6ae; }
+.ns-btn-update:hover { background: #37b; }
+.ns-btn-remove { background: #c44; color: #fff; border: 2px outset #e66; }
+.ns-btn-remove:hover { background: #b33; }
+.ns-btn-launch { background: #888; color: #fff; border: 2px outset #aaa; }
+.ns-btn-launch:hover { background: #777; }
+.ns-btn-disabled { opacity: 0.5; pointer-events: none; }
+
+.ns-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: #666;
+}
+
+.ns-empty {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.ns-detail-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.ns-detail-panel {
+  background: #c0c0c0;
+  border: 2px outset #ddd;
+  width: 420px;
+  max-height: 80%;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ns-detail-panel h2 {
+  margin: 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ns-detail-panel .ns-detail-meta {
+  font-size: 11px;
+  color: #444;
+  line-height: 1.6;
+}
+.ns-detail-panel .ns-detail-desc {
+  font-size: 12px;
+  color: #222;
+  border: 2px inset #fff;
+  background: #fff;
+  padding: 8px;
+}
+.ns-detail-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.ns-detail-btns button {
+  padding: 3px 16px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ns-statusbar {
+  padding: 3px 8px;
+  background: #c0c0c0;
+  border-top: 2px groove #fff;
+  font-size: 11px;
+  color: #333;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+}
+@end
+
+@template
+<div class="ns-toolbar">
+  <button id="ns-btn-refresh" title="Обновить каталог">🔄 Обновить</button>
+  <button id="ns-btn-selfupdate" title="Обновить NutStore">🥜 Обновить себя</button>
+  <input class="ns-search" id="ns-search" type="text" placeholder="🔍 Поиск приложений..." />
+  <span class="ns-status-text" id="ns-status-text"></span>
+</div>
+<div class="ns-body">
+  <div class="ns-sidebar" id="ns-sidebar"></div>
+  <div class="ns-content" id="ns-content">
+    <div class="ns-loading">🥜 Загрузка каталога...</div>
+  </div>
+</div>
+<div class="ns-statusbar">
+  <span id="ns-statusbar-left">Готов</span>
+  <span id="ns-statusbar-right"></span>
+</div>
+@end
+
+@script
+function init($el, kernel, pid, args) {
+
+  /* ─── Константы ─── */
+  const REPO_BASE = 'https://raw.githubusercontent.com/Vasysik/orexos-nutrepo/main/';
+  const INDEX_URL = REPO_BASE + 'index.json';
+  const STATE_KEY = 'nutstore:installed';
+
+  /* ─── DOM ─── */
+  const sidebar     = $el.querySelector('#ns-sidebar');
+  const content     = $el.querySelector('#ns-content');
+  const searchInput = $el.querySelector('#ns-search');
+  const btnRefresh  = $el.querySelector('#ns-btn-refresh');
+  const btnSelf     = $el.querySelector('#ns-btn-selfupdate');
+  const statusLeft  = $el.querySelector('#ns-statusbar-left');
+  const statusRight = $el.querySelector('#ns-statusbar-right');
+  const statusText  = $el.querySelector('#ns-status-text');
+
+  /* ─── Состояние ─── */
+  let catalog      = null;     // данные из index.json
+  let installedMap = {};       // id → { version, path, installedAt }
+  let activeCategory = null;   // null = все
+  let searchQuery  = '';
+  let busy         = false;
+
+  /* ─── Имена категорий (UI) ─── */
+  const CAT_LABELS = {
+    system:      '⚙️ Система',
+    store:       '🏪 Магазин',
+    games:       '🎮 Игры',
+    utilities:   '🔧 Утилиты',
+    monitoring:  '📊 Мониторинг',
+    multimedia:  '🎵 Мультимедиа',
+    development: '💻 Разработка',
+    network:     '🌐 Сеть',
+    education:   '📚 Образование',
+    fun:         '🎉 Развлечения',
+    nuts:        '🌰 Орехи',
+    productivity:'📋 Продуктивность',
+    cli:         '🖥️ CLI',
+    library:     '📦 Библиотека',
+  };
+  function catLabel(id) {
+    return CAT_LABELS[id] || ('📁 ' + id.charAt(0).toUpperCase() + id.slice(1));
+  }
+
+  /* ─── Загрузка данных об установленных ─── */
+  function loadInstalled() {
+    installedMap = kernel.state.load(STATE_KEY, {});
+  }
+  function saveInstalled() {
+    kernel.state.save(STATE_KEY, installedMap);
+  }
+
+  /* ─── Проверка — установлено ли ─── */
+  function getInstalledInfo(appId) {
+    // Сначала из нашей записи
+    if (installedMap[appId]) return installedMap[appId];
+    // Потом из ядра (уже зарегистрировано, но мы не знали)
+    const app = kernel.getApp(appId);
+    if (app) {
+      return { version: app.manifest?.version || '?', path: '?', installedAt: '?' };
+    }
+    return null;
+  }
+
+  /* ─── Сравнение версий (простое) ─── */
+  function isNewer(remoteVer, localVer) {
+    if (!localVer || localVer === '?') return true;
+    const r = remoteVer.split('.').map(Number);
+    const l = localVer.split('.').map(Number);
+    for (let i = 0; i < Math.max(r.length, l.length); i++) {
+      const rv = r[i] || 0, lv = l[i] || 0;
+      if (rv > lv) return true;
+      if (rv < lv) return false;
+    }
+    return false;
+  }
+
+  /* ─── Фильтрация ─── */
+  function getFilteredApps() {
+    if (!catalog || !catalog.apps) return [];
+    let apps = catalog.apps;
+    if (activeCategory) {
+      apps = apps.filter(a => (a.categories || []).includes(activeCategory));
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      apps = apps.filter(a =>
+        a.name.toLowerCase().includes(q) ||
+        a.description.toLowerCase().includes(q) ||
+        a.id.toLowerCase().includes(q) ||
+        (a.author || '').toLowerCase().includes(q)
+      );
+    }
+    return apps;
+  }
+
+  /* ─── Рендер сайдбара ─── */
+  function renderSidebar() {
+    if (!catalog) { sidebar.innerHTML = ''; return; }
+    const cats = catalog.categories || [];
+    let html = '';
+    html += `<div class="ns-cat-item${activeCategory === null ? ' active' : ''}" data-cat="__all__">📋 Все (${catalog.apps.length})</div>`;
+    for (const c of cats) {
+      const count = catalog.apps.filter(a => (a.categories || []).includes(c)).length;
+      const active = activeCategory === c ? ' active' : '';
+      html += `<div class="ns-cat-item${active}" data-cat="${c}">${catLabel(c)} (${count})</div>`;
+    }
+    sidebar.innerHTML = html;
+
+    sidebar.querySelectorAll('.ns-cat-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const cat = el.dataset.cat;
+        activeCategory = cat === '__all__' ? null : cat;
+        renderSidebar();
+        renderGrid();
+      });
+    });
+  }
+
+  /* ─── Рендер сетки приложений ─── */
+  function renderGrid() {
+    const apps = getFilteredApps();
+    if (apps.length === 0) {
+      content.innerHTML = '<div class="ns-empty">🥜 Ничего не найдено</div>';
+      statusLeft.textContent = 'Приложений: 0';
+      return;
+    }
+
+    let html = '<div class="ns-grid">';
+    for (const app of apps) {
+      const inst = getInstalledInfo(app.id);
+      const hasUpdate = inst && isNewer(app.version, inst.version);
+      const isSelf = app.id === 'nutstore';
+
+      let btnHtml = '';
+      if (inst && hasUpdate && !isSelf) {
+        btnHtml = `<button class="ns-btn-update" data-action="install" data-id="${app.id}">⬆️ Обновить</button>`;
+      } else if (inst && !hasUpdate) {
+        btnHtml = `<button class="ns-btn-launch" data-action="launch" data-id="${app.id}">▶️ Запустить</button>`;
+        if (!isSelf) {
+          btnHtml += ` <button class="ns-btn-remove" data-action="remove" data-id="${app.id}">✕</button>`;
+        }
+      } else {
+        btnHtml = `<button class="ns-btn-install" data-action="install" data-id="${app.id}">📥 Установить</button>`;
+      }
+
+      html += `
+        <div class="ns-card" data-id="${app.id}">
+          <div class="ns-card-header">
+            <span class="ns-card-icon">${app.icon || '📦'}</span>
+            <div>
+              <div class="ns-card-title">${esc(app.name)}</div>
+              <div class="ns-card-ver">v${esc(app.version)}${app.author ? ' • ' + esc(app.author) : ''}</div>
+            </div>
+          </div>
+          <div class="ns-card-desc">${esc(app.description || '')}</div>
+          <div class="ns-card-footer">
+            <span class="ns-card-cats">${(app.categories || []).map(c => catLabel(c)).join(', ')}</span>
+            ${btnHtml}
+          </div>
+        </div>`;
+    }
+    html += '</div>';
+    content.innerHTML = html;
+    statusLeft.textContent = `Приложений: ${apps.length}`;
+
+    // Обработчики кнопок
+    content.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        if (action === 'install') installApp(id);
+        else if (action === 'remove') removeApp(id);
+        else if (action === 'launch') launchApp(id);
+      });
+    });
+
+    // Клик по карточке — детали
+    content.querySelectorAll('.ns-card').forEach(card => {
+      card.addEventListener('dblclick', () => showDetail(card.dataset.id));
+    });
+  }
+
+  /* ─── Детальный просмотр ─── */
+  function showDetail(appId) {
+    const app = catalog.apps.find(a => a.id === appId);
+    if (!app) return;
+    const inst = getInstalledInfo(appId);
+    const hasUpdate = inst && isNewer(app.version, inst.version);
+    const isSelf = app.id === 'nutstore';
+
+    let btnsHtml = '';
+    if (!inst) {
+      btnsHtml += `<button class="ns-btn-install" data-action="install">📥 Установить</button>`;
+    } else if (hasUpdate && !isSelf) {
+      btnsHtml += `<button class="ns-btn-update" data-action="install">⬆️ Обновить до v${esc(app.version)}</button>`;
+    }
+    if (inst && !isSelf) {
+      btnsHtml += `<button class="ns-btn-remove" data-action="remove">🗑 Удалить</button>`;
+    }
+    if (inst) {
+      btnsHtml += `<button class="ns-btn-launch" data-action="launch">▶️ Запустить</button>`;
+    }
+    btnsHtml += `<button data-action="close">Закрыть</button>`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ns-detail-overlay';
+    overlay.innerHTML = `
+      <div class="ns-detail-panel">
+        <h2><span style="font-size:32px">${app.icon || '📦'}</span> ${esc(app.name)}</h2>
+        <div class="ns-detail-meta">
+          <b>ID:</b> ${esc(app.id)}<br>
+          <b>Версия:</b> ${esc(app.version)}${inst ? ' (установлена: ' + esc(inst.version) + ')' : ''}<br>
+          <b>Автор:</b> ${esc(app.author || '—')}<br>
+          <b>Категории:</b> ${(app.categories || []).map(c => catLabel(c)).join(', ') || '—'}<br>
+          <b>Зависимости:</b> ${(app.deps || []).length > 0 ? app.deps.map(d => esc(d)).join(', ') : 'нет'}<br>
+          <b>Размер:</b> ${app.size ? formatSize(app.size) : '?'}<br>
+          <b>Файл:</b> ${esc(app.file || '?')}
+        </div>
+        <div class="ns-detail-desc">${esc(app.description || 'Без описания')}</div>
+        <div class="ns-detail-btns">${btnsHtml}</div>
+      </div>`;
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.remove();
+    });
+    overlay.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.action;
+        if (action === 'close') { overlay.remove(); return; }
+        overlay.remove();
+        if (action === 'install') await installApp(appId);
+        else if (action === 'remove') await removeApp(appId);
+        else if (action === 'launch') launchApp(appId);
+      });
+    });
+
+    $el.style.position = 'relative';
+    $el.appendChild(overlay);
+  }
+
+  /* ─── Установка с зависимостями (рекурсивная) ─── */
+  async function installApp(appId, _depChain = new Set()) {
+    if (busy) return;
+    if (_depChain.has(appId)) {
+      console.warn('[NutStore] Циклическая зависимость:', appId);
+      return;
+    }
+    _depChain.add(appId);
+
+    const app = catalog.apps.find(a => a.id === appId);
+    if (!app) {
+      await kernel.dialog.error('NutStore', `Приложение "${appId}" не найдено в каталоге.`);
+      return;
+    }
+
+    busy = true;
+    setStatus(`Установка ${app.name}...`);
+
+    try {
+      // 1. Рекурсивно ставим зависимости
+      if (app.deps && app.deps.length > 0) {
+        for (const depId of app.deps) {
+          const depInstalled = getInstalledInfo(depId);
+          const depInCatalog = catalog.apps.find(a => a.id === depId);
+          const depNeedsInstall = !depInstalled || (depInCatalog && isNewer(depInCatalog.version, depInstalled.version));
+
+          if (depNeedsInstall) {
+            setStatus(`Зависимость: ${depId}...`);
+            busy = false; // разрешаем рекурсию
+            await installApp(depId, _depChain);
+            busy = true;
+          }
+        }
+      }
+
+      // 2. Скачиваем файл
+      setStatus(`Скачивание ${app.name}...`);
+      const url = REPO_BASE + app.downloadUrl;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const code = await res.text();
+
+      // 3. Определяем расширение и путь
+      const ext = (app.file || 'orex').split('.').pop();
+      const filePath = `/apps/${app.id}.${ext}`;
+
+      // 4. Пишем в ФС
+      setStatus(`Сохранение ${app.name}...`);
+      const wr = kernel.fs.write(filePath, code);
+      if (!wr.ok) throw new Error('Ошибка записи: ' + (wr.error || '?'));
+
+      // 5. Регистрируем в ядре
+      setStatus(`Регистрация ${app.name}...`);
+      await kernel.launchOrex(filePath, { _registerOnly: true });
+
+      // 6. Записываем в installed
+      installedMap[app.id] = {
+        version: app.version,
+        path: filePath,
+        installedAt: new Date().toISOString(),
+      };
+      saveInstalled();
+
+      // 7. Ярлык на рабочий стол (если не библиотека и не cli-only)
+      const isLib = (app.categories || []).includes('library');
+      if (!isLib) {
+        kernel.fs.write(`/home/user/desktop/${app.id}.lnk`, JSON.stringify({
+          appId: app.id,
+          icon: app.icon || '📦',
+          name: app.name,
+        }));
+        kernel.emit('desktop:refresh');
+      }
+
+      setStatus(`✅ ${app.name} установлен!`);
+      renderGrid();
+
+    } catch (err) {
+      console.error('[NutStore]', err);
+      await kernel.dialog.error('Ошибка установки', `${app.name}: ${err.message}`);
+      setStatus('Ошибка');
+    } finally {
+      busy = false;
+    }
+  }
+
+  /* ─── Удаление ─── */
+  async function removeApp(appId) {
+    const inst = installedMap[appId];
+    if (!inst && !kernel.getApp(appId)) return;
+
+    const app = catalog.apps.find(a => a.id === appId);
+    const name = app ? app.name : appId;
+
+    const ok = await kernel.dialog.confirm('Удаление', `Удалить "${name}"?`);
+    if (!ok) return;
+
+    // Убиваем процессы
+    const procs = kernel.getProcesses().filter(p => p.appId === appId);
+    for (const p of procs) kernel.kill(p.pid);
+
+    // Удаляем файл
+    if (inst && inst.path && inst.path !== '?') {
+      kernel.fs.rm(inst.path);
+    }
+
+    // Удаляем ярлык
+    kernel.fs.rm(`/home/user/desktop/${appId}.lnk`);
+    kernel.emit('desktop:refresh');
+
+    // Снимаем регистрацию
+    kernel.unregisterApp(appId);
+
+    // Убираем из записей
+    delete installedMap[appId];
+    saveInstalled();
+
+    setStatus(`🗑 ${name} удалён`);
+    renderGrid();
+  }
+
+  /* ─── Запуск ─── */
+  function launchApp(appId) {
+    kernel.launch(appId);
+  }
+
+  /* ─── Самообновление ─── */
+  async function selfUpdate() {
+    if (busy) return;
+    if (!catalog) {
+      await kernel.dialog.error('NutStore', 'Сначала загрузите каталог.');
+      return;
+    }
+    const self = catalog.apps.find(a => a.id === 'nutstore');
+    if (!self) {
+      await kernel.dialog.alert('NutStore', 'NutStore не найден в каталоге.');
+      return;
+    }
+    const inst = getInstalledInfo('nutstore');
+    if (inst && !isNewer(self.version, inst.version)) {
+      await kernel.dialog.alert('NutStore', `У вас актуальная версия (v${inst.version}).`);
+      return;
+    }
+
+    const ok = await kernel.dialog.confirm('Обновление NutStore',
+      `Обновить NutStore с v${inst ? inst.version : '?'} до v${self.version}?\nОкно будет перезапущено.`);
+    if (!ok) return;
+
+    busy = true;
+    setStatus('Скачивание обновления NutStore...');
+
+    try {
+      const url = REPO_BASE + self.downloadUrl;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const code = await res.text();
+      const filePath = `/apps/nutstore.orex`;
+      const wr = kernel.fs.write(filePath, code);
+      if (!wr.ok) throw new Error('Ошибка записи: ' + (wr.error || '?'));
+
+      installedMap['nutstore'] = {
+        version: self.version,
+        path: filePath,
+        installedAt: new Date().toISOString(),
+      };
+      saveInstalled();
+
+      // Перерегистрируем и перезапускаем
+      await kernel.launchOrex(filePath, { _registerOnly: true });
+
+      await kernel.dialog.alert('NutStore', '✅ Обновлено! Перезапустите NutStore.');
+      // Закрываем текущее окно
+      const wid = kernel.getProcess(pid)?.windowId;
+      if (wid) kernel.wm.closeWindow(wid);
+
+    } catch (err) {
+      await kernel.dialog.error('Ошибка обновления', err.message);
+    } finally {
+      busy = false;
+    }
+  }
+
+  /* ─── Загрузка каталога ─── */
+  async function loadCatalog() {
+    setStatus('Загрузка каталога...');
+    content.innerHTML = '<div class="ns-loading">🥜 Загрузка каталога...</div>';
+
+    try {
+      const res = await fetch(INDEX_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      catalog = await res.json();
+
+      // Кэшируем
+      kernel.state.save('nutstore:catalog-cache', catalog);
+
+      statusRight.textContent = `Обновлено: ${new Date(catalog.generated || Date.now()).toLocaleString()}`;
+      setStatus(`Загружено: ${catalog.apps.length} приложений`);
+
+      renderSidebar();
+      renderGrid();
+
+    } catch (err) {
+      console.error('[NutStore] Fetch error:', err);
+
+      // Пробуем кэш
+      const cached = kernel.state.load('nutstore:catalog-cache', null);
+      if (cached) {
+        catalog = cached;
+        statusRight.textContent = '(из кэша)';
+        setStatus(`Офлайн-режим: ${catalog.apps.length} приложений`);
+        renderSidebar();
+        renderGrid();
+        await kernel.dialog.warning('NutStore', 'Не удалось загрузить каталог.\nПоказаны данные из кэша.\n\n' + err.message);
+      } else {
+        content.innerHTML = `<div class="ns-empty">❌ Не удалось загрузить каталог.<br><br>${esc(err.message)}<br><br>Нажмите 🔄 Обновить для повторной попытки.</div>`;
+        setStatus('Ошибка загрузки');
+      }
+    }
+  }
+
+  /* ─── Утилиты ─── */
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+  }
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' Б';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' КБ';
+    return (bytes / 1048576).toFixed(1) + ' МБ';
+  }
+  function setStatus(text) {
+    statusLeft.textContent = text;
+    statusText.textContent = text;
+    // Очищаем toolbar-статус через 3 секунды
+    clearTimeout(setStatus._t);
+    setStatus._t = setTimeout(() => { statusText.textContent = ''; }, 3000);
+  }
+
+  /* ─── Поиск ─── */
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchQuery = searchInput.value.trim();
+      renderGrid();
+    }, 250);
+  });
+
+  /* ─── Кнопки ─── */
+  btnRefresh.addEventListener('click', () => loadCatalog());
+  btnSelf.addEventListener('click', () => selfUpdate());
+
+  /* ─── Контекстное меню ─── */
+  kernel.wm.setWindowContextMenu(pid, [
+    { label: '🔄 Обновить каталог', action: () => loadCatalog() },
+    { label: '🥜 Обновить NutStore', action: () => selfUpdate() },
+    { separator: true },
+    { label: '🗑 Очистить кэш', action: () => {
+      kernel.state.save('nutstore:catalog-cache', null);
+      kernel.dialog.alert('NutStore', 'Кэш очищен.');
+    }},
+  ]);
+
+  /* ─── Cleanup ─── */
+  kernel.onSignal(pid, () => {
+    clearTimeout(searchTimer);
+    clearTimeout(setStatus._t);
+    kernel.wm.clearWindowContextMenu(pid);
+  });
+
+  /* ─── Старт ─── */
+  loadInstalled();
+  loadCatalog();
+}
+@end

@@ -1,0 +1,38 @@
+name: Generate NutStore Index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'generate_index.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate index.json
+        run: python generate_index.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "NutStore Bot 🥜"
+          git config user.email "nutstore-bot@orexos.local"
+          git add index.json
+          if git diff --cached --quiet; then
+            echo "No changes to index.json"
+          else
+            git commit -m "🥜 Update NutStore index [auto]"
+            git push
+          fi

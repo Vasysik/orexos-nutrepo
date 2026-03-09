@@ -1,0 +1,862 @@
+#!/usr/bin/orex
+
+@manifest
+id:      python-ide
+name:    Python IDE
+icon:    🐍
+version: 1.0
+type:    gui
+size:    820x560
+single:  true
+deps:    python
+desc:    IDE для написания и запуска Python-скриптов
+@end
+
+@style
+:root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'MS Sans Serif', Geneva, sans-serif;
+  background: #1e1e2e;
+  color: #cdd6f4;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  background: #313244;
+  border-bottom: 1px solid #45475a;
+  flex-shrink: 0;
+}
+
+.toolbar button {
+  background: #45475a;
+  color: #cdd6f4;
+  border: 1px solid #585b70;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar button:hover {
+  background: #585b70;
+}
+
+.toolbar button:active {
+  background: #6c7086;
+}
+
+.toolbar button.run-btn {
+  background: #a6e3a1;
+  color: #1e1e2e;
+  border-color: #94e2d5;
+  font-weight: bold;
+}
+
+.toolbar button.run-btn:hover {
+  background: #94e2d5;
+}
+
+.toolbar button.run-btn:disabled {
+  background: #585b70;
+  color: #6c7086;
+  border-color: #45475a;
+  cursor: not-allowed;
+}
+
+.toolbar button.stop-btn {
+  background: #f38ba8;
+  color: #1e1e2e;
+  border-color: #eba0ac;
+  font-weight: bold;
+}
+
+.toolbar button.stop-btn:hover {
+  background: #eba0ac;
+}
+
+.toolbar .separator {
+  width: 1px;
+  height: 20px;
+  background: #585b70;
+  margin: 0 4px;
+}
+
+.toolbar .file-label {
+  flex: 1;
+  text-align: right;
+  font-size: 11px;
+  color: #a6adc8;
+  padding-right: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.main-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-panel {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+
+.line-numbers {
+  width: 44px;
+  background: #181825;
+  color: #6c7086;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 8px 6px 8px 0;
+  text-align: right;
+  overflow: hidden;
+  user-select: none;
+  border-right: 1px solid #313244;
+  flex-shrink: 0;
+}
+
+.editor-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.code-editor {
+  width: 100%;
+  height: 100%;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 8px;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+
+.code-editor::selection {
+  background: #45475a;
+}
+
+.code-editor::placeholder {
+  color: #585b70;
+}
+
+.divider {
+  height: 4px;
+  background: #313244;
+  cursor: ns-resize;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #45475a;
+  border-bottom: 1px solid #45475a;
+}
+
+.divider::after {
+  content: '· · ·';
+  color: #6c7086;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+.divider:hover {
+  background: #45475a;
+}
+
+.output-panel {
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  min-height: 60px;
+}
+
+.output-header {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+
+.output-header span {
+  font-size: 11px;
+  color: #a6adc8;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.output-header button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #6c7086;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.output-header button:hover {
+  color: #cdd6f4;
+}
+
+.output-content {
+  flex: 1;
+  background: #11111b;
+  color: #a6e3a1;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 6px 8px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.output-content .err {
+  color: #f38ba8;
+}
+
+.output-content .info {
+  color: #89b4fa;
+}
+
+.output-content .dim {
+  color: #6c7086;
+}
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  padding: 1px 8px;
+  background: #313244;
+  border-top: 1px solid #45475a;
+  font-size: 11px;
+  color: #a6adc8;
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.statusbar .status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a6e3a1;
+  flex-shrink: 0;
+}
+
+.statusbar .status-indicator.running {
+  background: #f9e2af;
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+.statusbar .status-indicator.error {
+  background: #f38ba8;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.tab-bar {
+  display: flex;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab-bar::-webkit-scrollbar { height: 0; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #6c7086;
+  background: #181825;
+  border-right: 1px solid #313244;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 180px;
+  flex-shrink: 0;
+}
+
+.tab:hover {
+  background: #1e1e2e;
+  color: #a6adc8;
+}
+
+.tab.active {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-bottom: 2px solid #89b4fa;
+}
+
+.tab .modified {
+  color: #f9e2af;
+}
+
+.tab .close-tab {
+  font-size: 14px;
+  color: #6c7086;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.tab .close-tab:hover {
+  color: #f38ba8;
+}
+
+.tab-add {
+  padding: 4px 10px;
+  color: #6c7086;
+  cursor: pointer;
+  font-size: 14px;
+  background: none;
+  border: none;
+  flex-shrink: 0;
+}
+
+.tab-add:hover {
+  color: #cdd6f4;
+  background: #1e1e2e;
+}
+@end
+
+@template
+<div class="toolbar">
+  <button class="new-btn" title="Новый файл (Ctrl+N)">📄 Новый</button>
+  <button class="open-btn" title="Открыть (Ctrl+O)">📂 Открыть</button>
+  <button class="save-btn" title="Сохранить (Ctrl+S)">💾 Сохранить</button>
+  <button class="saveas-btn" title="Сохранить как...">💾 Как…</button>
+  <div class="separator"></div>
+  <button class="run-btn" title="Запустить (F5)">▶ Запустить</button>
+  <button class="stop-btn" title="Остановить" style="display:none">■ Стоп</button>
+  <div class="separator"></div>
+  <button class="fmt-btn" title="Автоотступ">🔧 Формат</button>
+  <span class="file-label">без имени</span>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-add" title="Новая вкладка">＋</button>
+</div>
+
+<div class="main-area">
+  <div class="editor-panel">
+    <div class="line-numbers">1</div>
+    <div class="editor-wrap">
+      <textarea class="code-editor" spellcheck="false"
+        placeholder="# Напишите Python-код здесь...&#10;print('Hello, OrexOS! 🥜')"></textarea>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="output-panel">
+    <div class="output-header">
+      <span>📟 Вывод</span>
+      <button class="clear-output-btn" title="Очистить">✕</button>
+    </div>
+    <div class="output-content"></div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <div class="status-indicator"></div>
+  <span class="status-text">Готов</span>
+  <span class="cursor-pos">Стр 1, Стб 1</span>
+  <span style="margin-left:auto">Python 3 · Pyodide</span>
+</div>
+@end
+
+@script
+function init($el, kernel, pid, args) {
+
+  /* ── Элементы ─────────────────────────────────────── */
+  const editor     = $el.querySelector('.code-editor');
+  const lineNums   = $el.querySelector('.line-numbers');
+  const output     = $el.querySelector('.output-content');
+  const statusText = $el.querySelector('.status-text');
+  const statusDot  = $el.querySelector('.status-indicator');
+  const cursorPos  = $el.querySelector('.cursor-pos');
+  const fileLabel  = $el.querySelector('.file-label');
+  const tabBar     = $el.querySelector('.tab-bar');
+  const tabAddBtn  = $el.querySelector('.tab-add');
+  const runBtn     = $el.querySelector('.run-btn');
+  const stopBtn    = $el.querySelector('.stop-btn');
+
+  /* ── Состояние вкладок ───────────────────────────── */
+  let tabs = [];
+  let activeTabIdx = -1;
+  let runningPid = null;
+  let nextId = 1;
+
+  const DEFAULT_CODE = `# Hello OrexOS! 🐍\nprint("Hello, World!")\n`;
+
+  function makeTab(name, path, code) {
+    return {
+      id: nextId++,
+      name: name || 'без имени',
+      path: path || null,
+      code: code ?? DEFAULT_CODE,
+      modified: false,
+      scrollTop: 0,
+      selStart: 0,
+      selEnd: 0,
+    };
+  }
+
+  /* ── Рендер вкладок ──────────────────────────────── */
+  function renderTabs() {
+    tabBar.querySelectorAll('.tab').forEach(t => t.remove());
+    tabs.forEach((tab, i) => {
+      const el = document.createElement('div');
+      el.className = 'tab' + (i === activeTabIdx ? ' active' : '');
+      el.innerHTML = `
+        <span>${tab.modified ? '<span class="modified">●</span> ' : ''}${esc(tab.name)}</span>
+        <span class="close-tab" data-idx="${i}">×</span>
+      `;
+      el.addEventListener('click', e => {
+        if (e.target.classList.contains('close-tab')) return;
+        switchTab(i);
+      });
+      el.querySelector('.close-tab').addEventListener('click', e => {
+        e.stopPropagation();
+        closeTab(i);
+      });
+      tabBar.insertBefore(el, tabAddBtn);
+    });
+  }
+
+  function esc(s) {
+    const d = document.createElement('span');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  /* ── Переключение вкладки ────────────────────────── */
+  function saveCurrentTab() {
+    if (activeTabIdx >= 0 && tabs[activeTabIdx]) {
+      const t = tabs[activeTabIdx];
+      t.code = editor.value;
+      t.scrollTop = editor.scrollTop;
+      t.selStart = editor.selectionStart;
+      t.selEnd = editor.selectionEnd;
+    }
+  }
+
+  function switchTab(idx) {
+    saveCurrentTab();
+    activeTabIdx = idx;
+    const t = tabs[idx];
+    editor.value = t.code;
+    editor.scrollTop = t.scrollTop;
+    editor.setSelectionRange(t.selStart, t.selEnd);
+    fileLabel.textContent = t.path || t.name;
+    updateLines();
+    renderTabs();
+    editor.focus();
+  }
+
+  async function closeTab(idx) {
+    const t = tabs[idx];
+    if (t.modified) {
+      const action = await kernel.dialog.choice(
+        'Сохранить изменения?',
+        `Файл "${t.name}" изменён.`,
+        [
+          { id: 'save', label: '💾 Сохранить', primary: true },
+          { id: 'discard', label: '🗑 Не сохранять' },
+          { id: 'cancel', label: 'Отмена' },
+        ]
+      );
+      if (action === 'cancel' || action === null) return;
+      if (action === 'save') {
+        saveCurrentTab();
+        await doSave(t);
+      }
+    }
+    tabs.splice(idx, 1);
+    if (tabs.length === 0) {
+      addTab();
+      return;
+    }
+    if (activeTabIdx >= tabs.length) activeTabIdx = tabs.length - 1;
+    switchTab(activeTabIdx);
+  }
+
+  function addTab(name, path, code) {
+    const t = makeTab(name, path, code);
+    tabs.push(t);
+    switchTab(tabs.length - 1);
+  }
+
+  /* ── Номера строк ────────────────────────────────── */
+  function updateLines() {
+    const count = editor.value.split('\n').length;
+    let html = '';
+    for (let i = 1; i <= count; i++) html += i + '\n';
+    lineNums.textContent = html;
+  }
+
+  /* ── Позиция курсора ─────────────────────────────── */
+  function updateCursorPos() {
+    const val = editor.value;
+    const pos = editor.selectionStart;
+    const before = val.substring(0, pos);
+    const line = before.split('\n').length;
+    const col = pos - before.lastIndexOf('\n');
+    cursorPos.textContent = `Стр ${line}, Стб ${col}`;
+  }
+
+  /* ── Tab-клавиша ─────────────────────────────────── */
+  editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+
+      if (e.shiftKey) {
+        // Shift+Tab — удалить отступ
+        const val = editor.value;
+        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+        const lineText = val.substring(lineStart, end);
+        if (lineText.startsWith('    ')) {
+          editor.value = val.substring(0, lineStart) + lineText.substring(4) + val.substring(end);
+          editor.selectionStart = Math.max(lineStart, start - 4);
+          editor.selectionEnd = Math.max(lineStart, end - 4);
+        }
+      } else {
+        editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 4;
+      }
+      markModified();
+      updateLines();
+    }
+
+    // Enter — автоотступ
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const start = editor.selectionStart;
+      const val = editor.value;
+      const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+      const currentLine = val.substring(lineStart, start);
+      const indent = currentLine.match(/^(\s*)/)[1];
+      const extra = currentLine.trimEnd().endsWith(':') ? '    ' : '';
+      const insert = '\n' + indent + extra;
+      editor.value = val.substring(0, start) + insert + val.substring(editor.selectionEnd);
+      editor.selectionStart = editor.selectionEnd = start + insert.length;
+      markModified();
+      updateLines();
+    }
+  });
+
+  /* ── Отметка изменения ───────────────────────────── */
+  function markModified() {
+    if (activeTabIdx >= 0 && tabs[activeTabIdx]) {
+      tabs[activeTabIdx].modified = true;
+      renderTabs();
+    }
+  }
+
+  editor.addEventListener('input', () => {
+    updateLines();
+    markModified();
+  });
+
+  editor.addEventListener('scroll', () => {
+    lineNums.scrollTop = editor.scrollTop;
+  });
+
+  editor.addEventListener('click', updateCursorPos);
+  editor.addEventListener('keyup', updateCursorPos);
+
+  /* ── Ресайз панели вывода ────────────────────────── */
+  const divider = $el.querySelector('.divider');
+  const outputPanel = $el.querySelector('.output-panel');
+  const mainArea = $el.querySelector('.main-area');
+
+  divider.addEventListener('mousedown', e => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = outputPanel.offsetHeight;
+
+    function onMove(ev) {
+      const delta = startY - ev.clientY;
+      const newH = Math.max(60, Math.min(mainArea.offsetHeight - 100, startH + delta));
+      outputPanel.style.height = newH + 'px';
+    }
+
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  /* ── Вывод ───────────────────────────────────────── */
+  function appendOutput(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    output.appendChild(span);
+    output.scrollTop = output.scrollHeight;
+  }
+
+  function clearOutput() {
+    output.innerHTML = '';
+  }
+
+  $el.querySelector('.clear-output-btn').addEventListener('click', clearOutput);
+
+  /* ── Сохранение ──────────────────────────────────── */
+  async function doSave(tab) {
+    if (!tab.path) {
+      return await doSaveAs(tab);
+    }
+    const r = kernel.fs.write(tab.path, tab.code);
+    if (!r.ok) {
+      await kernel.dialog.error('Ошибка сохранения', r.error);
+      return false;
+    }
+    tab.modified = false;
+    tab.name = tab.path.split('/').pop();
+    renderTabs();
+    fileLabel.textContent = tab.path;
+    setStatus('Сохранено: ' + tab.path);
+    return true;
+  }
+
+  async function doSaveAs(tab) {
+    const name = await kernel.dialog.prompt(
+      'Сохранить как',
+      'Полный путь к файлу:',
+      tab.path || '/home/user/documents/script.py'
+    );
+    if (!name) return false;
+
+    // Проверяем, что директория существует
+    const dir = name.substring(0, name.lastIndexOf('/'));
+    if (dir && !kernel.fs.isDir(dir)) {
+      kernel.fs.mkdir(dir);
+    }
+
+    tab.path = name;
+    tab.code = editor.value;
+    return await doSave(tab);
+  }
+
+  /* ── Открытие файла ──────────────────────────────── */
+  async function doOpen() {
+    const path = await kernel.dialog.prompt(
+      'Открыть файл',
+      'Путь к .py файлу:',
+      '/home/user/documents/'
+    );
+    if (!path) return;
+
+    const content = kernel.fs.read(path);
+    if (content === null) {
+      await kernel.dialog.error('Ошибка', 'Файл не найден: ' + path);
+      return;
+    }
+
+    // Проверяем, не открыт ли уже
+    const existingIdx = tabs.findIndex(t => t.path === path);
+    if (existingIdx >= 0) {
+      switchTab(existingIdx);
+      return;
+    }
+
+    const name = path.split('/').pop();
+    addTab(name, path, content);
+  }
+
+  /* ── Запуск кода ─────────────────────────────────── */
+  async function runCode() {
+    saveCurrentTab();
+    const tab = tabs[activeTabIdx];
+    if (!tab) return;
+
+    const code = tab.code.trim();
+    if (!code) {
+      appendOutput('Нет кода для выполнения.\n', 'dim');
+      return;
+    }
+
+    clearOutput();
+    appendOutput('── Запуск: ' + (tab.name || 'скрипт') + ' ──\n', 'info');
+
+    setStatus('Выполнение...', 'running');
+    runBtn.style.display = 'none';
+    stopBtn.style.display = '';
+
+    const startTime = performance.now();
+
+    // Сохраняем во временный файл и запускаем через CLI python
+    const tmpPath = '/tmp/_pyide_' + pid + '_' + Date.now() + '.py';
+    kernel.fs.write(tmpPath, code);
+
+    try {
+      const result = await kernel.spawnCli('python', [tmpPath], {
+        onData: chunk => appendOutput(chunk),
+        onError: chunk => appendOutput(chunk, 'err'),
+        timeout: 60000,
+      });
+
+      runningPid = null;
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+
+      if (result.code === 0) {
+        appendOutput('\n── Завершено за ' + elapsed + 'с (код: 0) ──\n', 'info');
+        setStatus('Завершено за ' + elapsed + 'с');
+      } else {
+        appendOutput('\n── Ошибка, код: ' + result.code + ' (' + elapsed + 'с) ──\n', 'err');
+        setStatus('Ошибка (код ' + result.code + ')', 'error');
+      }
+    } catch (e) {
+      appendOutput('\n── Прервано / таймаут ──\n', 'err');
+      setStatus('Прервано', 'error');
+    } finally {
+      kernel.fs.rm(tmpPath);
+      runBtn.style.display = '';
+      stopBtn.style.display = 'none';
+    }
+  }
+
+  function stopCode() {
+    if (runningPid) {
+      kernel.kill(runningPid);
+      runningPid = null;
+    }
+    setStatus('Остановлено', 'error');
+  }
+
+  /* ── Форматирование (простое) ────────────────────── */
+  function formatCode() {
+    // Простая нормализация — убираем trailing whitespace и лишние пустые строки
+    let code = editor.value;
+    code = code.replace(/[ \t]+$/gm, '');       // trailing spaces
+    code = code.replace(/\n{3,}/g, '\n\n');      // max 2 пустые строки подряд
+    code = code.replace(/\t/g, '    ');          // tabs -> 4 spaces
+    if (!code.endsWith('\n')) code += '\n';
+    editor.value = code;
+    markModified();
+    updateLines();
+    appendOutput('Код отформатирован.\n', 'info');
+  }
+
+  /* ── Статусбар ───────────────────────────────────── */
+  function setStatus(text, state) {
+    statusText.textContent = text;
+    statusDot.className = 'status-indicator' + (state ? ' ' + state : '');
+  }
+
+  /* ── Привязка кнопок ─────────────────────────────── */
+  $el.querySelector('.new-btn').addEventListener('click', () => addTab());
+  $el.querySelector('.open-btn').addEventListener('click', doOpen);
+  $el.querySelector('.save-btn').addEventListener('click', () => {
+    saveCurrentTab();
+    doSave(tabs[activeTabIdx]);
+  });
+  $el.querySelector('.saveas-btn').addEventListener('click', () => {
+    saveCurrentTab();
+    doSaveAs(tabs[activeTabIdx]);
+  });
+  runBtn.addEventListener('click', runCode);
+  stopBtn.addEventListener('click', stopCode);
+  $el.querySelector('.fmt-btn').addEventListener('click', formatCode);
+  tabAddBtn.addEventListener('click', () => addTab());
+
+  /* ── Горячие клавиши ─────────────────────────────── */
+  function handleKeydown(e) {
+    // Проверяем что наше окно активно
+    const wid = kernel.getProcess(pid)?.windowId;
+    if (!wid) return;
+    const win = document.getElementById(wid);
+    if (!win || !win.classList.contains('focused')) return;
+
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      saveCurrentTab();
+      doSave(tabs[activeTabIdx]);
+    }
+    if (e.ctrlKey && e.key === 'o') {
+      e.preventDefault();
+      doOpen();
+    }
+    if (e.ctrlKey && e.key === 'n') {
+      e.preventDefault();
+      addTab();
+    }
+    if (e.key === 'F5') {
+      e.preventDefault();
+      runCode();
+    }
+  }
+
+  document.addEventListener('keydown', handleKeydown);
+
+  /* ── Открытие файла через args ───────────────────── */
+  if (args && args.path) {
+    const content = kernel.fs.read(args.path);
+    if (content !== null) {
+      const name = args.path.split('/').pop();
+      tabs = [];
+      addTab(name, args.path, content);
+    } else {
+      addTab();
+    }
+  } else {
+    addTab();
+  }
+
+  /* ── Контекстное меню ────────────────────────────── */
+  kernel.wm.setWindowContextMenu(pid, [
+    { label: '▶ Запустить (F5)',     action: runCode },
+    { separator: true },
+    { label: '📄 Новый файл',        action: () => addTab() },
+    { label: '📂 Открыть...',        action: doOpen },
+    { label: '💾 Сохранить',         action: () => { saveCurrentTab(); doSave(tabs[activeTabIdx]); } },
+    { separator: true },
+    { label: '🔧 Форматировать',     action: formatCode },
+    { label: '🗑 Очистить вывод',    action: clearOutput },
+  ]);
+
+  /* ── Cleanup ─────────────────────────────────────── */
+  kernel.onSignal(pid, () => {
+    document.removeEventListener('keydown', handleKeydown);
+    kernel.wm.clearWindowContextMenu(pid);
+  });
+}
+@end

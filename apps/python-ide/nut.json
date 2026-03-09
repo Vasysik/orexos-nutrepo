@@ -1,0 +1,11 @@
+{
+  "id": "python-ide",
+  "name": "Python IDE",
+  "version": "1.0.0",
+  "categories": ["coding"],
+  "description": "IDE для написания и запуска Python-скриптов.",
+  "icon": "🐍",
+  "file": "python-ide.orex",
+  "deps": ["python"],
+  "author": "Orexia Systems"
+}

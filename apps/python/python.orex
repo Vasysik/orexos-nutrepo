@@ -1,0 +1,120 @@
+#!/usr/bin/orex
+
+@manifest
+id:      python
+name:    Python 3
+icon:    🐍
+version: 1.1
+type:    cli
+bin:     true
+desc:    Интерпретатор Python (Pyodide Wasm)
+@end
+
+@script
+async function main(argv, stdout, stderr, stdin, kernel, pid) {
+  let pyodide = window.__PYODIDE_INSTANCE__;
+  
+  // 1. Инициализация или получение кешированного экземпляра
+  if (!pyodide) {
+    if (!argv[0]) stdout("Загрузка Python 3 (Pyodide Wasm). Подождите...\n");
+    try {
+      const pyodideModule = await import('https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.mjs');
+      
+      // Инициализируем с пустыми заглушками, так как мы будем менять их ниже
+      pyodide = await pyodideModule.loadPyodide();
+      window.__PYODIDE_INSTANCE__ = pyodide;
+    } catch (e) {
+      stderr("Ошибка загрузки Pyodide: " + e.message + "\n");
+      return 1;
+    }
+  }
+
+  // !!! КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ !!!
+  // Перенаправляем стандартный вывод Pyodide на stdout/stderr ТЕКУЩЕГО процесса
+  // batched: true/false зависит от того, как ты хочешь получать строки. 
+  // Обычно Pyodide шлет строки целиком в обработчик.
+  pyodide.setStdout({
+    batched: (msg) => stdout(msg + '\n')
+  });
+  pyodide.setStderr({
+    batched: (msg) => stderr(msg + '\n')
+  });
+
+  // Вспомогательная функция для запуска кода
+  async function runCode(code) {
+    try {
+      await pyodide.runPythonAsync(code);
+      return 0;
+    } catch (err) {
+      stderr(err.toString() + '\n');
+      return 1;
+    }
+  }
+
+  const proc = kernel.getProcess(pid);
+  const cwd = proc ? proc.cwd : '/home/user';
+
+  // --- Режимы выполнения ---
+  if (argv[0] === '-c' && argv[1]) {
+    return await runCode(argv[1]);
+  }
+
+  if (argv[0]) {
+    let path = argv[0];
+    if (!path.startsWith('/')) path = kernel.fs.normalize(cwd + '/' + path);
+    
+    if (!kernel.fs.exists(path)) {
+      stderr(`python: can't open file '${argv[0]}': [Errno 2] No such file or directory\n`);
+      return 1;
+    }
+    
+    const code = kernel.fs.read(path);
+    return await runCode(code);
+  }
+
+  if (stdin) {
+    let code = '';
+    let line;
+    // Читаем до тех пор, пока в пайпе есть данные или не пришел EOF
+    while ((line = await stdin()) !== null) {
+      code += line + '\n';
+    }
+    if (code.trim()) {
+      return await runCode(code);
+    }
+  }
+
+  // --- REPL ---
+  stdout(`Python 3 (Pyodide) on OrexOS\nType "exit()" or "quit()" to exit.\n`);
+  
+  if (!stdin) {
+    stderr("Терминал не поддерживает интерактивный ввод.\n");
+    return 1;
+  }
+
+  while (true) {
+    stdout(">>> ");
+    const line = await stdin();
+    
+    if (line === null) {
+      stdout("\n");
+      break; 
+    }
+    
+    const trimmed = line.trim();
+    if (trimmed === 'exit()' || trimmed === 'quit()') break;
+    if (!trimmed) continue;
+
+    try {
+      const result = await pyodide.runPythonAsync(line);
+      if (result !== undefined) {
+        stdout(result + '\n');
+      }
+    } catch (err) {
+      stderr(err.toString() + '\n');
+    }
+  }
+
+  return 0;
+}
+@end

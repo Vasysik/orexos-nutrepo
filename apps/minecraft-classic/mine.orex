@@ -1,0 +1,89 @@
+#!/usr/bin/orex
+# OrexOS .orex Приложение — Minecraft Classic
+
+@manifest
+id:      minecraft-classic
+name:    Minecraft
+icon:    ⛏️
+version: 1.0
+type:    gui
+size:    850x600
+single:  true
+@end
+
+@style
+.mc-root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #000;
+}
+.mc-toolbar {
+    background: #c0c0c0;
+    border-bottom: 2px solid #808080;
+    padding: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Trebuchet MS', sans-serif;
+    font-size: 12px;
+}
+.mc-btn {
+    padding: 2px 8px;
+    background: #dfdfdf;
+    border: 2px solid;
+    border-color: #fff #808080 #808080 #fff;
+    cursor: pointer;
+    font-size: 11px;
+}
+.mc-btn:active {
+    border-color: #808080 #fff #fff #808080;
+}
+.mc-iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #000;
+}
+@end
+
+@template
+<div class="mc-root">
+    <div class="mc-toolbar">
+        <span>🎮 Управление: WASD - ходить, Пробел - прыжок, ЛКМ - ломать/строить</span>
+        <button class="mc-btn" id="btn-reload">🔄 Перезагрузить</button>
+    </div>
+    <iframe 
+        class="mc-iframe" 
+        id="mc-frame" 
+        src="https://classic.minecraft.net/" 
+        allowfullscreen="true"
+        allow="keyboard-map; pointer-lock">
+    </iframe>
+</div>
+@end
+
+@script
+function init($el, kernel, pid, args) {
+    var iframe = $el.querySelector('#mc-frame');
+    var btnReload = $el.querySelector('#btn-reload');
+
+    // Кнопка принудительной перезагрузки фрейма
+    btnReload.addEventListener('click', function() {
+        iframe.src = iframe.src;
+    });
+
+    // Важно для игр: когда iframe загрузится, передаем ему фокус,
+    // чтобы сразу работала клавиатура (WASD) без лишних кликов
+    iframe.addEventListener('load', function() {
+        iframe.contentWindow.focus();
+    });
+    
+    // При клике на само окно OrexOS (например, на тулбар),
+    // стараемся вернуть фокус обратно в игру
+    $el.addEventListener('click', function() {
+        iframe.contentWindow.focus();
+    });
+}
+@end
