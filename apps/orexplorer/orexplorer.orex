@@ -4,163 +4,458 @@
 id:      orexplorer
 name:    Orexplorer
 icon:    🌐
-version: 1.0.0
+version: 2.1.0
 type:    gui
-size:    850x600
+size:    900x620
 single:  false
 desc:    Ультимативный веб-браузер OrexOS
 author:  Orexia Systems
 @end
 
 @style
-.browser-root {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.orex-root {
+    display: flex; flex-direction: column;
+    height: 100%; background: #c0c0c0;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    font-size: 12px; user-select: none;
+}
+
+::-webkit-scrollbar { width: 16px; height: 16px; }
+::-webkit-scrollbar-track { background: #c0c0c0; }
+::-webkit-scrollbar-thumb {
     background: #c0c0c0;
-    font-family: 'Trebuchet MS', sans-serif;
-    overflow: hidden;
+    border-top: 2px solid #fff; border-left: 2px solid #fff;
+    border-right: 2px solid #404040; border-bottom: 2px solid #404040;
+    min-height: 20px;
 }
-.browser-toolbar {
-    display: flex;
-    gap: 4px;
-    padding: 6px;
-    border-bottom: 2px solid #808080;
-    align-items: center;
-}
-.browser-btn {
-    padding: 4px 10px;
-    background: #dfdfdf;
-    border: 2px solid;
-    border-color: #fff #808080 #808080 #fff;
-    cursor: pointer;
-    font-size: 14px;
-}
-.browser-btn:active {
-    border-color: #808080 #fff #fff #808080;
-}
-.browser-btn:disabled {
-    color: #888;
-    border-color: #dfdfdf #aaa #aaa #dfdfdf;
-    cursor: not-allowed;
-}
-.browser-url {
-    flex: 1;
-    padding: 4px 6px;
-    font-size: 13px;
-    border: 2px inset #808080;
-    outline: none;
-}
-.browser-iframe {
-    flex: 1;
-    width: 100%;
-    border: none;
-    background: #fff;
-    min-height: 0;
-}
-.browser-status {
-    padding: 2px 6px;
-    font-size: 11px;
-    color: #333;
-    border-top: 2px solid #808080;
+::-webkit-scrollbar-button:single-button {
     background: #c0c0c0;
+    border-top: 2px solid #fff; border-left: 2px solid #fff;
+    border-right: 2px solid #404040; border-bottom: 2px solid #404040;
+    display: block; width: 16px; height: 16px;
 }
+::-webkit-scrollbar-button:single-button:vertical:decrement {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpolygon points='3,0 6,4 0,4' fill='%23000'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center;
+}
+::-webkit-scrollbar-button:single-button:vertical:increment {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpolygon points='0,0 6,0 3,4' fill='%23000'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center;
+}
+::-webkit-scrollbar-corner { background: #c0c0c0; }
+
+/* toolbar */
+.orex-toolbar {
+    display: flex; align-items: center; gap: 2px;
+    padding: 3px 4px; background: #c0c0c0;
+    border-bottom: 2px solid #808080; border-top: 1px solid #fff;
+    flex-shrink: 0;
+}
+.orex-btn-nav {
+    width: 38px; height: 30px; background: #c0c0c0;
+    border-top: 2px solid #fff; border-left: 2px solid #fff;
+    border-right: 2px solid #404040; border-bottom: 2px solid #404040;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px; flex-shrink: 0;
+}
+.orex-btn-nav:active { border-top: 2px solid #404040; border-left: 2px solid #404040; border-right: 2px solid #fff; border-bottom: 2px solid #fff; }
+.orex-btn-nav:disabled { cursor: not-allowed; border-color: #c0c0c0; }
+.orex-btn-nav:disabled .nav-arrow { color: #aaa; text-shadow: 1px 1px 0 #fff; }
+.orex-btn-nav:disabled .nav-label { color: #808080; text-shadow: 1px 1px 0 #fff; }
+.nav-arrow { font-size: 14px; line-height: 1; color: #000080; }
+.nav-label { font-size: 8px; color: #000; line-height: 1; }
+
+.orex-btn {
+    height: 30px; padding: 2px 7px; background: #c0c0c0;
+    border-top: 2px solid #fff; border-left: 2px solid #fff;
+    border-right: 2px solid #404040; border-bottom: 2px solid #404040;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1px; flex-shrink: 0; white-space: nowrap;
+}
+.orex-btn:active { border-top: 2px solid #404040; border-left: 2px solid #404040; border-right: 2px solid #fff; border-bottom: 2px solid #fff; }
+.orex-btn:disabled { cursor: not-allowed; border-color: #c0c0c0; }
+.orex-btn:disabled .btn-icon { opacity: 0.4; }
+.orex-btn:disabled .btn-label { color: #808080; text-shadow: 1px 1px 0 #fff; }
+.btn-icon { font-size: 14px; line-height: 1; }
+.btn-label { font-size: 8px; color: #000; line-height: 1; }
+
+.orex-addr-input {
+    flex: 1; height: 22px; padding: 2px 5px; font-size: 12px;
+    border-top: 2px solid #808080; border-left: 2px solid #808080;
+    border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+    background: #fff; outline: none;
+    font-family: 'MS Sans Serif', Arial, sans-serif; user-select: text;
+}
+.orex-btn-go {
+    height: 22px; padding: 0 8px; background: #c0c0c0;
+    border-top: 2px solid #fff; border-left: 2px solid #fff;
+    border-right: 2px solid #404040; border-bottom: 2px solid #404040;
+    cursor: pointer; font-size: 11px;
+    font-family: 'MS Sans Serif', Arial, sans-serif; flex-shrink: 0;
+}
+.orex-btn-go:active { border-top: 2px solid #404040; border-left: 2px solid #404040; border-right: 2px solid #fff; border-bottom: 2px solid #fff; }
+
+.orex-sep { width: 1px; height: 24px; background: #808080; border-right: 1px solid #fff; margin: 0 2px; flex-shrink: 0; }
+
+/* body */
+.orex-body { display: flex; flex: 1; overflow: hidden; }
+
+/* sidebar */
+.orex-sidebar {
+    width: 160px; min-width: 160px; background: #c0c0c0;
+    border-right: 2px solid #808080;
+    display: flex; flex-direction: column;
+    overflow: hidden; flex-shrink: 0;
+}
+.orex-sidebar.collapsed { width: 0; min-width: 0; border-right: none; }
+.orex-sidebar-title {
+    background: #000080; color: #fff; font-size: 11px; font-weight: bold;
+    padding: 4px 6px; white-space: nowrap; flex-shrink: 0;
+}
+.orex-sidebar-scroll { flex: 1; overflow-y: scroll; overflow-x: hidden; padding: 4px 0; }
+.orex-sidebar-section { margin-bottom: 4px; }
+.orex-sidebar-section-title {
+    font-size: 11px; font-weight: bold; color: #000080;
+    padding: 3px 6px 2px; border-bottom: 1px solid #808080; white-space: nowrap;
+}
+.orex-sidebar-link {
+    display: block; padding: 3px 8px; font-size: 11px; cursor: pointer;
+    color: #00008B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.orex-sidebar-link:hover { background: #000080; color: #fff; }
+
+/* frame */
+.orex-frame-wrap { flex: 1; overflow: hidden; background: #fff; display: flex; flex-direction: column; }
+.orex-iframe { flex: 1; width: 100%; border: none; background: #fff; display: block; }
+
+/* statusbar */
+.orex-statusbar {
+    display: flex; align-items: center;
+    border-top: 2px solid #808080; background: #c0c0c0; height: 20px; flex-shrink: 0;
+}
+.orex-status-text { flex: 1; padding: 0 6px; font-size: 11px; border-right: 2px solid #808080; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orex-progress-wrap { width: 120px; height: 100%; padding: 3px 4px; border-right: 2px solid #808080; }
+.orex-progress-bar { height: 100%; width: 0%; background: #000080; transition: width 0.2s; }
+.orex-status-zone { padding: 0 8px; font-size: 11px; white-space: nowrap; }
 @end
 
 @template
-<div class="browser-root">
-    <div class="browser-toolbar">
-        <button class="browser-btn" id="btn-back" title="Назад" disabled>⬅️</button>
-        <button class="browser-btn" id="btn-forward" title="Вперед" disabled>➡️</button>
-        <button class="browser-btn" id="btn-reload" title="Обновить">🔄</button>
-        <button class="browser-btn" id="btn-home" title="Домой">🏠</button>
-        
-        <input type="text" class="browser-url" id="url-bar" value="https://neosearch.neocities.org/" placeholder="Введите URL и нажмите Enter..." spellcheck="false" />
-        
-        <button class="browser-btn" id="btn-go">Перейти</button>
+<div class="orex-root">
+    <div class="orex-toolbar">
+        <button class="orex-btn-nav" id="btn-back" disabled>
+            <span class="nav-arrow">◀</span><span class="nav-label">Назад</span>
+        </button>
+        <button class="orex-btn-nav" id="btn-forward" disabled>
+            <span class="nav-arrow">▶</span><span class="nav-label">Вперёд</span>
+        </button>
+        <button class="orex-btn" id="btn-stop" disabled>
+            <span class="btn-icon">✖</span><span class="btn-label">Стоп</span>
+        </button>
+        <button class="orex-btn" id="btn-reload">
+            <span class="btn-icon">↺</span><span class="btn-label">Обновить</span>
+        </button>
+        <div class="orex-sep"></div>
+        <input type="text" class="orex-addr-input" id="url-bar" spellcheck="false" />
+        <button class="orex-btn-go" id="btn-go">➜</button>
+        <div class="orex-sep"></div>
+        <button class="orex-btn" id="btn-fav">
+            <span class="btn-icon">☆</span><span class="btn-label">Избранное</span>
+        </button>
+        <button class="orex-btn" id="btn-sidebar">
+            <span class="btn-icon">📂</span><span class="btn-label">Панель</span>
+        </button>
     </div>
-    
-    <iframe class="browser-iframe" id="web-frame" src="https://neosearch.neocities.org/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-    
-    <div class="browser-status" id="status-bar">Готово</div>
+    <div class="orex-body">
+        <div class="orex-sidebar" id="sidebar">
+            <div class="orex-sidebar-title">📂 Orexplorer</div>
+            <div class="orex-sidebar-scroll">
+                <div class="orex-sidebar-section">
+                    <div class="orex-sidebar-section-title">🔎 VHSearch</div>
+                    <span class="orex-sidebar-link" data-url="https://vhs.neocities.org/">🏠 Главная</span>
+                </div>
+                <div class="orex-sidebar-section">
+                    <div class="orex-sidebar-section-title">⚡ Ссылки</div>
+                    <span class="orex-sidebar-link" data-url="https://vasys.ru">🌰 OrexOS</span>
+                    <span class="orex-sidebar-link" data-url="https://theoldnet.com">📺 TheOldNet</span>
+                </div>
+                <div class="orex-sidebar-section">
+                    <div class="orex-sidebar-section-title">⭐ Избранное</div>
+                    <div id="sidebar-bookmarks"></div>
+                </div>
+            </div>
+        </div>
+        <div class="orex-frame-wrap">
+            <iframe class="orex-iframe" id="web-frame"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            ></iframe>
+        </div>
+    </div>
+    <div class="orex-statusbar">
+        <div class="orex-status-text" id="status-text">Готово</div>
+        <div class="orex-progress-wrap"><div class="orex-progress-bar" id="progress-bar"></div></div>
+        <div class="orex-status-zone">🌐 Orexia Internet Suite v2.1</div>
+    </div>
 </div>
 @end
 
 @script
 function init($el, kernel, pid, args) {
-    var frame = $el.querySelector('#web-frame');
-    var urlBar = $el.querySelector('#url-bar');
-    var btnGo = $el.querySelector('#btn-go');
-    var btnReload = $el.querySelector('#btn-reload');
-    var btnBack = $el.querySelector('#btn-back');
-    var btnForward = $el.querySelector('#btn-forward');
-    var btnHome = $el.querySelector('#btn-home');
-    var statusBar = $el.querySelector('#status-bar');
 
-    var homeUrl = 'https://neosearch.neocities.org/';
-    var historyList =[homeUrl];
-    var currentIndex = 0;
+    const frame       = $el.querySelector('#web-frame');
+    const urlBar      = $el.querySelector('#url-bar');
+    const btnGo       = $el.querySelector('#btn-go');
+    const btnBack     = $el.querySelector('#btn-back');
+    const btnFwd      = $el.querySelector('#btn-forward');
+    const btnStop     = $el.querySelector('#btn-stop');
+    const btnReload   = $el.querySelector('#btn-reload');
+    const btnFav      = $el.querySelector('#btn-fav');
+    const btnSidebar  = $el.querySelector('#btn-sidebar');
+    const sidebar     = $el.querySelector('#sidebar');
+    const statusTxt   = $el.querySelector('#status-text');
+    const progressBar = $el.querySelector('#progress-bar');
+    const sidemarkEl  = $el.querySelector('#sidebar-bookmarks');
 
-    function updateNavButtons() {
-        btnBack.disabled = currentIndex <= 0;
-        btnForward.disabled = currentIndex >= historyList.length - 1;
+    const HOME = 'https://vhs.neocities.org/';
+
+    let hist  = []; // История URL
+    let hIdx  = -1; // Текущий индекс в истории
+    let ptimer = null;
+    let isNavigating = false; // Флаг, что навигация инициирована НАМИ
+
+    const settings = kernel.state.load('orexplorer:settings', { sidebarOpen: true, bookmarks: [] });
+
+    function normalizeUrl(s) {
+        s = (s || '').trim();
+        if (!s) return HOME;
+        if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('about:')) return s;
+        if (s.indexOf('.') !== -1 && s.indexOf(' ') === -1 && !s.startsWith('localhost')) {
+            return 'https://' + s;
+        }
+        return SEARCH_URL + encodeURIComponent(s);
     }
 
-    function navigate(url, isHistoryAction = false) {
-        if (!url) return;
+    // Главная функция навигации
+    function loadUrl(url, addToHistory) {
+        const fullUrl = normalizeUrl(url);
         
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url;
+        if (addToHistory) {
+            // Если мы вернулись назад и идем на новую страницу, старое "будущее" стирается
+            if (hIdx < hist.length - 1) {
+                hist.splice(hIdx + 1);
+            }
+            hist.push(fullUrl);
+            hIdx = hist.length - 1;
         }
 
-        statusBar.textContent = 'Загрузка: ' + url + ' ...';
-        urlBar.value = url;
-        frame.src = url;
+        isNavigating = true;
+        urlBar.value = fullUrl;
+        updateNav();
 
-        if (!isHistoryAction) {
-            historyList = historyList.slice(0, currentIndex + 1);
-            historyList.push(url);
-            currentIndex++;
-        }
-        
-        updateNavButtons();
+        btnStop.disabled = false;
+        startProgress();
+        statusTxt.textContent = 'Загрузка: ' + fullUrl;
+        frame.src = fullUrl;
     }
 
-    btnGo.addEventListener('click', function() {
-        navigate(urlBar.value);
+    // Обёртка для удобства
+    function goTo(url) {
+        loadUrl(url, true);
+    }
+
+    function updateNav() {
+        btnBack.disabled  = hIdx <= 0;
+        btnFwd.disabled   = hIdx >= hist.length - 1;
+    }
+
+    /* ── Progress Bar ── */
+    function startProgress() {
+        let v = 5; progressBar.style.width = '5%';
+        clearInterval(ptimer);
+        ptimer = setInterval(() => {
+            v = Math.min(v + Math.random() * 12, 88);
+            progressBar.style.width = v + '%';
+        }, 200);
+    }
+    function endProgress() {
+        clearInterval(ptimer);
+        progressBar.style.width = '100%';
+        setTimeout(() => { progressBar.style.width = '0%'; }, 300);
+    }
+
+    /* ── Iframe Load Logic ── */
+    frame.addEventListener('load', () => {
+        btnStop.disabled = true;
+        endProgress();
+
+        let realUrl = frame.src;
+        let title   = '';
+
+        try {
+            // Для same-origin сайтов мы можем получить реальный URL после редиректов
+            if (frame.contentWindow && frame.contentWindow.location.href !== 'about:blank') {
+                 realUrl = frame.contentWindow.location.href;
+            }
+            title = frame.contentDocument.title || '';
+
+            // Если реальный URL отличается от того, что мы ожидали, значит
+            // произошла навигация внутри iframe (клик, редирект).
+            if (isNavigating === false && realUrl !== hist[hIdx]) {
+                // Это НОВАЯ страница, добавляем ее в историю.
+                // Не вызываем loadUrl, чтобы не было цикла, а делаем все вручную.
+                 if (hIdx < hist.length - 1) {
+                    hist.splice(hIdx + 1);
+                }
+                hist.push(realUrl);
+                hIdx = hist.length - 1;
+            } else {
+                // Иначе, это была запланированная загрузка. Просто обновим
+                // URL в истории на случай, если был незаметный редирект.
+                if (hist[hIdx]) {
+                    hist[hIdx] = realUrl;
+                }
+            }
+
+            // Вешаем перехватчик кликов, чтобы ВСЕ клики по ссылкам
+            // проходили через нашу систему навигации.
+            if (frame.contentDocument && !frame.contentDocument._orex_handler) {
+                frame.contentDocument._orex_handler = true;
+                frame.contentDocument.addEventListener('click', (e) => {
+                    const a = e.target.closest('a[href]');
+                    if (!a) return;
+                    
+                    const href = a.href; // a.href всегда будет абсолютным URL
+                    if (!href || href.startsWith('javascript:') || a.getAttribute('href').startsWith('#')) {
+                        return;
+                    }
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                    goTo(href); // Вся навигация через нашу систему
+                }, true);
+            }
+        } catch (e) {
+            // Cross-origin: доступ запрещен. Здесь мы мало что можем сделать,
+            // кроме как доверять URL, который мы сами установили.
+            // К счастью, sandbox="allow-popups" решает проблему с target="_blank".
+        }
+
+        // Синхронизируем адресную строку и обновляем кнопки
+        urlBar.value = hist[hIdx] || realUrl;
+        updateNav();
+
+        statusTxt.textContent = 'Готово' + (title ? ' — ' + title : '');
+        isNavigating = false;
     });
 
-    urlBar.addEventListener('keydown', function(e) {
+    /* ── Toolbar Buttons ── */
+    btnGo.addEventListener('click', () => { goTo(urlBar.value); });
+
+    urlBar.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            navigate(urlBar.value);
+            e.preventDefault();
+            goTo(urlBar.value);
         }
     });
 
-    btnReload.addEventListener('click', function() {
-        statusBar.textContent = 'Обновление страницы...';
-        frame.src = frame.src;
-    });
-
-    btnHome.addEventListener('click', function() {
-        navigate(homeUrl);
-    });
-
-    btnBack.addEventListener('click', function() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            navigate(historyList[currentIndex], true);
+    btnBack.addEventListener('click', () => {
+        if (hIdx > 0) {
+            hIdx--;
+            loadUrl(hist[hIdx], false);
         }
     });
 
-    btnForward.addEventListener('click', function() {
-        if (currentIndex < historyList.length - 1) {
-            currentIndex++;
-            navigate(historyList[currentIndex], true);
+    btnFwd.addEventListener('click', () => {
+        if (hIdx < hist.length - 1) {
+            hIdx++;
+            loadUrl(hist[hIdx], false);
         }
     });
 
-    frame.addEventListener('load', function() {
-        statusBar.textContent = 'Готово';
+    btnStop.addEventListener('click', () => {
+        frame.src = 'about:blank';
+        isNavigating = false;
+        btnStop.disabled = true;
+        endProgress();
+        statusTxt.textContent = 'Остановлено';
+    });
+
+    btnReload.addEventListener('click', () => {
+        if (hIdx >= 0) {
+            loadUrl(hist[hIdx], false);
+        }
+    });
+
+    btnFav.addEventListener('click', async () => {
+        const url = urlBar.value || HOME;
+        let title = '';
+        try { title = frame.contentDocument.title; } catch(e) {}
+        const name = await kernel.dialog.prompt('Добавить в избранное', 'Название:', title || url);
+        if (!name) return;
+        settings.bookmarks.push({ name: name.trim(), url: url });
+        kernel.state.save('orexplorer:settings', settings);
+        renderBookmarks();
+        await kernel.dialog.alert('Избранное', '⭐ ' + name.trim() + ' добавлено!');
+    });
+
+    /* ── Sidebar ── */
+    function applySidebar() {
+        sidebar.classList.toggle('collapsed', !settings.sidebarOpen);
+    }
+    applySidebar();
+    btnSidebar.addEventListener('click', () => {
+        settings.sidebarOpen = !settings.sidebarOpen;
+        applySidebar();
+        kernel.state.save('orexplorer:settings', settings);
+    });
+
+    $el.querySelectorAll('[data-url]').forEach(el => {
+        el.addEventListener('click', () => { goTo(el.dataset.url); });
+    });
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function renderBookmarks() {
+        if (!settings.bookmarks.length) {
+            sidemarkEl.innerHTML = '<span style="padding:3px 8px;font-size:11px;color:#808080;display:block">Пусто</span>';
+            return;
+        }
+        sidemarkEl.innerHTML = settings.bookmarks.map((b, i) => {
+            return `<span class="orex-sidebar-link" data-bm="${i}" title="${escHtml(b.url)}">🔖 ${escHtml(b.name)}</span>`;
+        }).join('');
+        sidemarkEl.querySelectorAll('[data-bm]').forEach(el => {
+            el.addEventListener('click', () => {
+                goTo(settings.bookmarks[+el.dataset.bm].url);
+            });
+        });
+    }
+    renderBookmarks();
+
+    /* ── Context Menu ── */
+    kernel.wm.setWindowContextMenu(pid, [
+        { label: '🔎 VHSearch — домой',      action: () => { goTo(HOME); } },
+        { separator: true },
+        { label: '⭐ Добавить в избранное',  action: () => { btnFav.click(); } },
+        { label: '📂 Показать/скрыть панель',action: () => { btnSidebar.click(); } },
+        { separator: true },
+        { label: '📋 Копировать адрес', action: async () => {
+            const u = urlBar.value;
+            try { await navigator.clipboard.writeText(u); }
+            catch(e) { await kernel.dialog.alert('Адрес', u); }
+        }},
+    ]);
+
+    /* ── Start ── */
+    const startUrl = (args && (args.path || (args.argv && args.argv[0]))) || HOME;
+    goTo(startUrl);
+
+    /* ── Cleanup ── */
+    kernel.onSignal(pid, () => {
+        clearInterval(ptimer);
+        kernel.wm.clearWindowContextMenu(pid);
     });
 }
 @end
