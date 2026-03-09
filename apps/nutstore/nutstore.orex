@@ -4,7 +4,7 @@
 id:      nutstore
 name:    NutStore
 icon:    🥜
-version: 1.0.0
+version: 1.0.1
 type:    gui
 size:    720x520
 single:  true
