@@ -4,7 +4,7 @@
 id:      nutstore
 name:    NutStore
 icon:    🥜
-version: 1.0.3
+version: 1.0.4
 type:    gui
 size:    720x520
 single:  true
@@ -306,27 +306,46 @@ function init($el, kernel, pid, args) {
   // Никаких сохранений в localStorage (kernel.state).
   function syncWithFS() {
     installedMap = {};
-    if (!catalog) return;
+    let files = [];
+    
+    try {
+      // 1. Получаем список всего, что лежит в /apps/
+      const lsResult = kernel.fs.ls('/apps/');
+      // ls может вернуть как массив, так и объект {ok, data}, обрабатываем оба
+      files = Array.isArray(lsResult) ? lsResult : (lsResult.ok && Array.isArray(lsResult.data) ? lsResult.data : []);
+    } catch (e) {
+      // Папки /apps/ может не существовать. Это нормально.
+      console.warn('[NutStore] Directory /apps/ not found. Assuming nothing is installed.');
+      return; 
+    }
 
-    for (const app of catalog.apps) {
-      const ext = (app.file || 'orex').split('.').pop();
-      const filePath = `/apps/${app.id}.${ext}`;
+    // 2. Проходим по каждому найденному файлу
+    for (const filename of files) {
+      // Нас интересуют только .orex файлы
+      if (!filename.endsWith('.orex')) continue;
 
+      const filePath = `/apps/${filename}`;
       try {
-        let content = kernel.fs.read(filePath);
-        // Защита: разные версии ядра могут возвращать строку или объект {ok: true, data: ...}
-        let text = typeof content === 'string' ? content : (content && content.data ? content.data : null);
+        // 3. Читаем содержимое файла
+        const content = kernel.fs.read(filePath);
+        const text = typeof content === 'string' ? content : (content && content.data ? content.data : '');
 
         if (text) {
-          // Файл физически существует. Вытаскиваем версию регуляркой прямо из кода.
+          // 4. Парсим ID и ВЕРСИЮ прямо из манифеста в коде
+          const idMatch = text.match(/id:\s*([^\r\n]+)/);
           const vMatch = text.match(/version:\s*([^\r\n]+)/);
-          installedMap[app.id] = {
-            version: vMatch ? vMatch[1].trim() : '?',
-            path: filePath
-          };
+
+          if (idMatch && vMatch) {
+            const appId = idMatch[1].trim();
+            // 5. Записываем в нашу карту установленных
+            installedMap[appId] = {
+              version: vMatch[1].trim(),
+              path: filePath
+            };
+          }
         }
       } catch (e) {
-        // Файл не найден — значит не установлено
+        console.warn(`[NutStore] Failed to read or parse ${filePath}`, e);
       }
     }
   }
@@ -647,7 +666,7 @@ function init($el, kernel, pid, args) {
     content.innerHTML = '<div class="ns-loading">🥜 Загрузка каталога...</div>';
 
     try {
-      const res = await fetch(INDEX_URL);
+      const res = await fetch(INDEX_URL + '?t=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       catalog = await res.json();
       kernel.state.save('nutstore:catalog-cache', catalog);
