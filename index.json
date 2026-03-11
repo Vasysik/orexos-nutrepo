@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-09T21:24:01.816941+00:00",
+  "generated": "2026-03-11T23:08:26.522726+00:00",
   "apps": [
     {
       "id": "cpp",
@@ -49,6 +49,21 @@
       "author": "Mojang Studios",
       "size": 2412,
       "downloadUrl": "apps/minecraft-classic/mine.orex"
+    },
+    {
+      "id": "minecraft-online",
+      "name": "Minecraft+",
+      "version": "1.0.0",
+      "categories": [
+        "games"
+      ],
+      "description": "Тот самый улучшенный Minecraft с ОНЛАЙНОМ для OrexOS",
+      "icon": "⛏️",
+      "file": "mine.orex",
+      "deps": [],
+      "author": "Mojang Studios",
+      "size": 2181,
+      "downloadUrl": "apps/minecraft-online/mine.orex"
     },
     {
       "id": "nutstore",
