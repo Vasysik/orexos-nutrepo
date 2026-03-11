@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-11T23:08:26.522726+00:00",
+  "generated": "2026-03-11T23:10:07.056075+00:00",
   "apps": [
     {
       "id": "cpp",
@@ -53,16 +53,17 @@
     {
       "id": "minecraft-online",
       "name": "Minecraft+",
-      "version": "1.0.0",
+      "version": "1.17.1",
       "categories": [
-        "games"
+        "games",
+        ""
       ],
-      "description": "Тот самый улучшенный Minecraft с ОНЛАЙНОМ для OrexOS",
+      "description": "Онлайн Minecraft для OrexOS",
       "icon": "⛏️",
       "file": "mine.orex",
       "deps": [],
-      "author": "Mojang Studios",
-      "size": 2181,
+      "author": "Orexia Systems",
+      "size": 2136,
       "downloadUrl": "apps/minecraft-online/mine.orex"
     },
     {
@@ -130,6 +131,7 @@
     }
   ],
   "categories": [
+    "",
     "cli",
     "development",
     "games",
