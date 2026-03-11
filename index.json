@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-09T19:34:39.233017+00:00",
+  "generated": "2026-03-09T21:24:01.816941+00:00",
   "apps": [
     {
       "id": "cpp",
@@ -68,7 +68,7 @@
     {
       "id": "orexplorer",
       "name": "Orexplorer",
-      "version": "1.0.0",
+      "version": "2.1.0",
       "categories": [
         "network"
       ],
@@ -77,7 +77,7 @@
       "file": "orexplorer.orex",
       "deps": [],
       "author": "Orexia Systems",
-      "size": 4531,
+      "size": 19410,
       "downloadUrl": "apps/orexplorer/orexplorer.orex"
     },
     {
