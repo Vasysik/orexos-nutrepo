@@ -5,12 +5,12 @@
 id:      minecraft-online
 name:    Minecraft+
 icon:    ⛏️
-version: 1.0.0
+version: 1.17.1
 type:    gui
 size:    850x600
 single:  true
-desc:    Тот самый улучшенный Minecraft с ОНЛАЙНОМ для OrexOS
-author:  Mojang Studios
+desc:    Онлайн Minecraft для OrexOS
+author:  Orexia Systems
 @end
 
 @style
