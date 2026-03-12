@@ -65,12 +65,6 @@ author:  Orexia Systems
 @script
 function init($el, kernel, pid, args) {
     var iframe = $el.querySelector('#mc-frame');
-    var btnReload = $el.querySelector('#btn-reload');
-
-    // Кнопка принудительной перезагрузки фрейма
-    btnReload.addEventListener('click', function() {
-        iframe.src = iframe.src;
-    });
 
     // Важно для игр: когда iframe загрузится, передаем ему фокус,
     // чтобы сразу работала клавиатура (WASD) без лишних кликов
