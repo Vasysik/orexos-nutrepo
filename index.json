@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-03-11T23:10:07.056075+00:00",
+  "generated": "2026-03-11T23:10:39.132206+00:00",
   "apps": [
     {
       "id": "cpp",
@@ -56,7 +56,7 @@
       "version": "1.17.1",
       "categories": [
         "games",
-        ""
+        "network"
       ],
       "description": "Онлайн Minecraft для OrexOS",
       "icon": "⛏️",
@@ -131,7 +131,6 @@
     }
   ],
   "categories": [
-    "",
     "cli",
     "development",
     "games",
